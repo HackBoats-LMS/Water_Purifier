@@ -1,0 +1,80 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum customer_type{
+  IN_HOUSE
+  External
+}
+
+model Customer{
+  id Int @id @default(autoincrement())
+  name String
+  phone_number String
+  email String? 
+  address String
+  purifier_model_name String
+  purifier_model_number String?
+  purchase_date DateTime?
+  warranty_expiry_date DateTime?
+  warranty_duration_months Int?
+  expiry_date DateTime?
+  customer_type customer_type @default(IN_HOUSE)
+  
+  // New fields for tracking service schedules
+  last_service_date DateTime?
+  service_interval_months Int? @default(3)
+  
+  // Relations
+  assignments Assignment[]
+}
+
+enum workerType{
+  ADMIN
+  WORKER
+}
+
+model Worker{
+  id Int @id @default(autoincrement())
+  name String
+  email String? @unique
+  phone_number String @unique
+  passwordHash String
+  worker_type workerType @default(WORKER)
+
+  // Relations
+  assignments Assignment[]
+}
+
+enum AssignmentStatus {
+  PENDING
+  COMPLETED
+  CANCELLED
+}
+
+model Assignment {
+  id Int @id @default(autoincrement())
+  workerId Int
+  customerId Int
+  service_date DateTime
+  status AssignmentStatus @default(PENDING)
+  service_amount Float?
+  payment_mode String?
+  invoice_number String?
+  completed_at DateTime?
+  createdAt DateTime @default(now())
+
+  // Relations
+  worker Worker @relation(fields: [workerId], references: [id])
+  customer Customer @relation(fields: [customerId], references: [id])
+}
