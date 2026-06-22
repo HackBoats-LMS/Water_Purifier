@@ -140,7 +140,7 @@ export default function SalesPage() {
   return (
     <div className="p-6 h-full flex flex-col">
       {/* Header */}
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <div>
           <h1 className="text-3xl font-black text-[#111111] tracking-tight">Service Records</h1>
           <p className="text-gray-500 text-sm mt-1">View all completed and pending retail entries.</p>
@@ -157,10 +157,10 @@ export default function SalesPage() {
       <div className="bg-white rounded-[1.5rem] border border-gray-200 shadow-sm flex flex-col flex-1 overflow-hidden">
         
         {/* Controls Bar */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-100 bg-white">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between p-4 border-b border-gray-100 bg-white gap-4">
           
           {/* Tabs */}
-          <div className="flex bg-gray-100/80 p-1.5 rounded-[1rem]">
+          <div className="flex flex-wrap bg-gray-100/80 p-1.5 rounded-[1rem] gap-2 md:gap-0">
             <button
               onClick={() => setActiveTab("COMPLETED")}
               className={`px-5 py-2 rounded-xl text-sm font-bold transition-all ${
@@ -205,13 +205,13 @@ export default function SalesPage() {
         </div>
 
         {/* Table */}
-        <div className="flex-1 overflow-auto">
+        <div className="flex-1 overflow-auto min-w-0">
           {loading ? (
             <div className="flex justify-center py-20">
               <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
             </div>
           ) : (
-            <table className="w-full text-left border-collapse">
+            <table className="w-full text-left border-collapse min-w-[1000px] lg:min-w-full whitespace-nowrap lg:whitespace-normal">
               <thead className="sticky top-0 bg-white z-10 border-b border-gray-100">
                 <tr>
                   <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Inv. No</th>

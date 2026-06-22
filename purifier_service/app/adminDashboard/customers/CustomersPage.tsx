@@ -198,7 +198,7 @@ export default function CustomersPage() {
     <div className="h-full pb-10 flex flex-col gap-6">
       
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4 sm:mb-0">
         <h1 className="text-3xl font-black text-[#111111] tracking-tight">Customers Directory</h1>
         <button 
           onClick={() => {
@@ -226,7 +226,7 @@ export default function CustomersPage() {
               <p className="text-gray-500 mt-2">Add a new customer to see them listed here.</p>
             </div>
           ) : (
-            <div className="flex flex-col h-full">
+            <div className="flex flex-col h-full min-w-0">
               {/* Top Controls */}
               <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-white">
                 <div className="relative w-full max-w-sm">
@@ -241,8 +241,8 @@ export default function CustomersPage() {
                 </div>
               </div>
 
-              <div className="overflow-x-auto w-full">
-              <table className="w-full text-left border-collapse">
+              <div className="overflow-x-auto w-full min-w-0">
+              <table className="w-full text-left border-collapse min-w-[1000px] lg:min-w-full whitespace-nowrap lg:whitespace-normal">
                 <thead className="sticky top-0 bg-white z-10 border-b border-gray-100">
                   <tr>
                     <th className="px-6 py-4 w-20">
