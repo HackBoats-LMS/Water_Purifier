@@ -172,7 +172,7 @@ export default function WorkersPage() {
               </div>
 
               <div className="overflow-x-auto w-full">
-              <table className="w-full text-left border-collapse whitespace-nowrap">
+              <table className="w-full text-left border-collapse">
                 <thead className="sticky top-0 bg-white z-10 border-b border-gray-100">
                   <tr>
                     <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Name</th>

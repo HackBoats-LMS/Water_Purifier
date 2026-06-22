@@ -242,7 +242,7 @@ export default function CustomersPage() {
               </div>
 
               <div className="overflow-x-auto w-full">
-              <table className="w-full text-left whitespace-nowrap min-w-max border-collapse">
+              <table className="w-full text-left border-collapse">
                 <thead className="sticky top-0 bg-white z-10 border-b border-gray-100">
                   <tr>
                     <th className="px-6 py-4 w-20">

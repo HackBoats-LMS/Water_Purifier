@@ -211,7 +211,7 @@ export default function SalesPage() {
               <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
             </div>
           ) : (
-            <table className="w-full text-left whitespace-nowrap min-w-max border-collapse">
+            <table className="w-full text-left border-collapse">
               <thead className="sticky top-0 bg-white z-10 border-b border-gray-100">
                 <tr>
                   <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Inv. No</th>
