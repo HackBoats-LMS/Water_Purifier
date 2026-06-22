@@ -144,7 +144,7 @@ export default function WorkersPage() {
       <div className="grid lg:grid-cols-4 gap-8">
         
         {/* Left Col: Worker Table */}
-      <div className="lg:col-span-3">
+      <div className="lg:col-span-3 min-w-0">
         <div className="bg-white/80 backdrop-blur-sm rounded-[2rem] border border-gray-200 shadow-sm overflow-hidden min-h-[500px]">
           {loading ? (
              <div className="flex justify-center py-20">
@@ -156,7 +156,7 @@ export default function WorkersPage() {
               <p className="text-gray-500 mt-2">Add a new worker to see them listed here.</p>
             </div>
           ) : (
-            <div className="flex flex-col h-full">
+            <div className="flex flex-col h-full min-w-0">
               {/* Top Controls */}
               <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-white">
                 <div className="relative w-full max-w-sm">
@@ -171,8 +171,8 @@ export default function WorkersPage() {
                 </div>
               </div>
 
-              <div className="overflow-x-auto w-full">
-              <table className="w-full text-left border-collapse">
+              <div className="overflow-x-auto w-full min-w-0">
+              <table className="w-full text-left border-collapse min-w-[800px] lg:min-w-full whitespace-nowrap lg:whitespace-normal">
                 <thead className="sticky top-0 bg-white z-10 border-b border-gray-100">
                   <tr>
                     <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Name</th>

@@ -265,9 +265,9 @@ export default function AssignmentsPage() {
           <ClipboardList className="w-5 h-5 text-[#111111]" />
           All Assignments
         </h2>
-        <div className="bg-white/80 backdrop-blur-sm rounded-[2rem] border border-gray-200 shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+        <div className="bg-white/80 backdrop-blur-sm rounded-[2rem] border border-gray-200 shadow-sm overflow-hidden min-w-0">
+          <div className="overflow-x-auto min-w-0">
+            <table className="w-full text-left border-collapse min-w-[800px] lg:min-w-full whitespace-nowrap lg:whitespace-normal">
               <thead>
                 <tr className="border-b border-gray-200 bg-gray-50/50">
                   <th className="px-5 py-4 font-bold text-xs text-gray-500 uppercase tracking-wider">Date</th>
