@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Users, ClipboardList, Briefcase, Hexagon, LogOut, Settings, Receipt, Database } from "lucide-react";
+import { Users, ClipboardList, Briefcase, Hexagon, LogOut, Receipt, Database } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export default function AdminLayout({
@@ -76,13 +76,6 @@ export default function AdminLayout({
             <Database className="w-6 h-6" strokeWidth={2} />
           </Link>
 
-          <Link
-            href="#"
-            className="w-14 h-14 flex items-center justify-center icon-btn text-gray-400 hover:text-[#111111] transition-all mt-auto"
-            title="Settings"
-          >
-            <Settings className="w-6 h-6" strokeWidth={2} />
-          </Link>
         </nav>
 
         {/* Logout / Bottom Action */}
@@ -96,7 +89,7 @@ export default function AdminLayout({
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 flex flex-col  h-[calc(100vh-2rem)]">
+      <main className="flex-1 min-w-0 flex flex-col h-[calc(100vh-2rem)]">
         
         {/* Top Header (Search Bar) */}
         

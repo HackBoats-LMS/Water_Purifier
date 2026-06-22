@@ -127,7 +127,12 @@ export default function AssignmentsPage() {
         <div className="space-y-4">
           <h2 className="text-lg font-extrabold text-[#111111] tracking-tight flex items-center gap-2 pl-2">
             <AlertCircle className="w-5 h-5 text-red-600" />
-            Action Required
+            Action Required 
+            {dueCustomers.length > 0 && (
+              <span className="text-sm px-2.5 py-0.5 rounded-full bg-red-100 text-red-600">
+                {dueCustomers.length} users
+              </span>
+            )}
           </h2>
           
           {dueCustomers.length === 0 ? (
