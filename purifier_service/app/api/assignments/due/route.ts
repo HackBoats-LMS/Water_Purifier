@@ -19,10 +19,10 @@ export async function GET(request: NextRequest) {
       }
     });
 
-    // 2. Filter customers whose service is due within the next 7 days
+    // 2. Filter customers whose service is due within the next 45 days (for next month projection)
     const today = new Date();
-    const sevenDaysFromNow = new Date();
-    sevenDaysFromNow.setDate(today.getDate() + 7);
+    const fortyFiveDaysFromNow = new Date();
+    fortyFiveDaysFromNow.setDate(today.getDate() + 45);
 
     const dueCustomersWithDates = customers.map(c => {
       let nextServiceDate = new Date(); // default to today if no last service date
@@ -35,8 +35,8 @@ export async function GET(request: NextRequest) {
       // If they already have a pending assignment, don't show them
       if (c.assignments.length > 0) return false;
 
-      // Check if the next service date is before 7 days from now
-      return c.nextServiceDate <= sevenDaysFromNow;
+      // Check if the next service date is before 45 days from now
+      return c.nextServiceDate <= fortyFiveDaysFromNow;
     });
 
     // Sort by priority: nearest date first

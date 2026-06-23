@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, CheckSquare, Square, History, X, Edit2, Search } from "lucide-react";
+import { Plus, CheckSquare, Square, History, X, Edit2, Search, Download } from "lucide-react";
 
 type Customer = {
   id: number;
@@ -21,8 +21,12 @@ type Customer = {
 export default function CustomersPage() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeRowId, setActiveRowId] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [workers, setWorkers] = useState<any[]>([]);
+
+  // Add Customer extra states
+  const [scheduleInstallation, setScheduleInstallation] = useState(false);
+  const [selectedWorker, setSelectedWorker] = useState("");
 
   // History State
   const [historyCustomer, setHistoryCustomer] = useState<Customer | null>(null);
@@ -63,6 +67,37 @@ export default function CustomersPage() {
     }
   }
 
+  async function getWorkers() {
+    try {
+      const res = await fetch("/api/workers/list");
+      if (res.ok) setWorkers(await res.json());
+    } catch (e) {}
+  }
+
+  function downloadCSV() {
+    const headers = ["Name", "Phone", "Email", "Address", "Model", "Type", "Interval (Months)", "Purchase Date", "Warranty Expiry"];
+    const rows = customers.map(c => [
+      c.name,
+      c.phone_number,
+      c.email || "",
+      `"${c.address}"`,
+      c.purifier_model_name,
+      c.customer_type,
+      c.service_interval_months,
+      c.purchase_date ? new Date(c.purchase_date).toLocaleDateString() : "",
+      c.warranty_expiry_date ? new Date(c.warranty_expiry_date).toLocaleDateString() : ""
+    ]);
+
+    const csvContent = [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.setAttribute("download", "customers_export.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
   async function addCustomer(e: React.FormEvent) {
     e.preventDefault();
     
@@ -96,10 +131,26 @@ export default function CustomersPage() {
       return;
     }
 
+    const newCustomer = await res.json();
+    
+    // Check if we need to schedule an installation instantly
+    if (scheduleInstallation && selectedWorker && newCustomer?.id) {
+       await fetch("/api/assignments", {
+         method: "POST",
+         headers: { "Content-Type": "application/json" },
+         body: JSON.stringify({
+            customerId: newCustomer.id.toString(),
+            workerId: selectedWorker,
+            service_date: new Date().toISOString().split('T')[0]
+         })
+       });
+    }
+
     setIsSuccess(true);
     setTimeout(() => {
       setIsSuccess(false);
       setName(""); setPhone(""); setEmail(""); setAddress(""); setModelName(""); setPurchaseDate(""); setWarrantyDuration(""); setCustomerType("IN_HOUSE"); setIntervalType("3"); setCustomInterval("1");
+      setScheduleInstallation(false); setSelectedWorker("");
       setShowAddModal(false);
       getCustomers();
     }, 1500);
@@ -186,12 +237,14 @@ export default function CustomersPage() {
 
   useEffect(() => {
     getCustomers();
+    getWorkers();
   }, []);
 
   const filteredCustomers = customers.filter(c => 
     c.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
     c.phone_number.includes(searchQuery) ||
-    c.address.toLowerCase().includes(searchQuery.toLowerCase())
+    c.address.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    c.purifier_model_name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -200,17 +253,27 @@ export default function CustomersPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4 sm:mb-0">
         <h1 className="text-3xl font-black text-[#111111] tracking-tight">Customers Directory</h1>
-        <button 
-          onClick={() => {
-            // Reset Form for Add
-            setName(""); setPhone(""); setEmail(""); setAddress(""); setModelName(""); setPurchaseDate(""); setWarrantyDuration(""); setCustomerType("IN_HOUSE"); setIntervalType("3"); setCustomInterval("1");
-            setShowAddModal(true);
-          }}
-          className="flex items-center gap-2 px-6 py-3 bg-[#86b83f] hover:bg-[#75a336] text-white font-bold rounded-xl shadow-[0_10px_20px_-5px_rgba(134,184,63,0.4)] transition-all active:scale-95"
-        >
-          <Plus className="w-5 h-5" strokeWidth={3} />
-          Add Customer
-        </button>
+        <div className="flex gap-2">
+          <button 
+            onClick={downloadCSV}
+            className="flex items-center gap-2 px-6 py-3 bg-white hover:bg-gray-50 text-gray-700 font-bold rounded-xl shadow-sm border border-gray-200 transition-all active:scale-95"
+          >
+            <Download className="w-5 h-5 text-gray-500" strokeWidth={2.5} />
+            Export Data
+          </button>
+          <button 
+            onClick={() => {
+              // Reset Form for Add
+              setName(""); setPhone(""); setEmail(""); setAddress(""); setModelName(""); setPurchaseDate(""); setWarrantyDuration(""); setCustomerType("IN_HOUSE"); setIntervalType("3"); setCustomInterval("1");
+              setScheduleInstallation(false); setSelectedWorker("");
+              setShowAddModal(true);
+            }}
+            className="flex items-center gap-2 px-6 py-3 bg-[#86b83f] hover:bg-[#75a336] text-white font-bold rounded-xl shadow-[0_10px_20px_-5px_rgba(134,184,63,0.4)] transition-all active:scale-95"
+          >
+            <Plus className="w-5 h-5" strokeWidth={3} />
+            Add Customer
+          </button>
+        </div>
       </div>
 
       {/* Full Width Table */}
@@ -270,38 +333,31 @@ export default function CustomersPage() {
                     </tr>
                   ) : (
                     filteredCustomers.map((c) => {
-                      const isActive = activeRowId === c.id;
                     return (
                       <tr 
                         key={c.id} 
-                        onClick={() => setActiveRowId(c.id)}
-                        className={`cursor-pointer transition-all duration-200 group ${
-                          isActive 
-                            ? 'bg-white shadow-[0_10px_20px_rgba(0,0,0,0.08)] relative z-10 scale-[1.01] -my-1 rounded-lg border-y border-gray-100' 
-                            : 'hover:bg-white'
-                        }`}
+                        onDoubleClick={(e) => {
+                          e.stopPropagation();
+                          fetchHistory(c);
+                        }}
+                        className="cursor-pointer transition-all duration-200 group hover:bg-white"
+                        title="Double click to view history"
                       >
                         <td className="px-6 py-4">
-                          {isActive ? (
-                            <div className="w-8 h-8 rounded-xl bg-white shadow-md border border-gray-200 flex items-center justify-center">
-                              <CheckSquare className="w-5 h-5 text-[#111111]" />
+                            <div className="w-8 h-8 rounded-xl border border-gray-300 flex items-center justify-center bg-white group-hover:border-blue-300 transition-colors">
+                              <Square className="w-5 h-5 text-gray-300 group-hover:text-blue-300 transition-colors" strokeWidth={1.5} />
                             </div>
-                          ) : (
-                            <div className="w-8 h-8 rounded-xl border border-gray-300 flex items-center justify-center bg-white">
-                              <Square className="w-5 h-5 text-gray-300" strokeWidth={1.5} />
-                            </div>
-                          )}
                         </td>
-                        <td className={`px-6 py-4 text-sm ${isActive ? 'font-bold text-[#111111]' : 'font-bold text-[#111111]'}`}>
+                        <td className="px-6 py-4 text-sm font-bold text-[#111111]">
                           {c.name}
                         </td>
-                        <td className={`px-6 py-4 text-sm ${isActive ? 'font-bold text-[#111111]' : 'text-gray-600'}`}>
+                        <td className="px-6 py-4 text-sm text-gray-600 group-hover:text-[#111111] transition-colors">
                           {c.purifier_model_name}
                         </td>
-                        <td className={`px-6 py-4 text-sm ${isActive ? 'font-bold text-[#111111]' : 'text-gray-500 font-medium'}`}>
+                        <td className="px-6 py-4 text-sm text-gray-500 font-medium group-hover:text-[#111111] transition-colors">
                           {c.phone_number}
                         </td>
-                        <td className={`px-6 py-4 text-sm ${isActive ? 'font-bold text-[#111111]' : 'text-gray-500 font-medium'}`}>
+                        <td className="px-6 py-4 text-sm text-gray-500 font-medium group-hover:text-[#111111] transition-colors">
                           <div className="max-w-[200px] truncate" title={c.address}>{c.address}</div>
                         </td>
                         <td className="px-6 py-4">
@@ -311,15 +367,15 @@ export default function CustomersPage() {
                             {c.customer_type === "IN_HOUSE" ? "In-House" : "External"}
                           </span>
                         </td>
-                        <td className={`px-6 py-4 text-sm ${isActive ? 'font-bold text-[#111111]' : 'text-gray-500 font-medium'}`}>
+                        <td className="px-6 py-4 text-sm text-gray-500 font-medium group-hover:text-[#111111] transition-colors">
                           {c.purchase_date ? new Date(c.purchase_date).toLocaleDateString() : "-"}
                         </td>
-                        <td className={`px-6 py-4 text-sm ${isActive ? 'font-bold text-[#111111]' : 'text-gray-500 font-medium'}`}>
+                        <td className="px-6 py-4 text-sm text-gray-500 font-medium group-hover:text-[#111111] transition-colors">
                           {c.warranty_expiry_date ? (
                             <span className="text-blue-600 font-bold">{new Date(c.warranty_expiry_date).toLocaleDateString()}</span>
                           ) : "-"}
                         </td>
-                        <td className={`px-6 py-4 text-sm ${isActive ? 'font-bold text-[#111111]' : 'text-gray-500 font-medium'}`}>
+                        <td className="px-6 py-4 text-sm text-gray-500 font-medium group-hover:text-[#111111] transition-colors">
                           {(() => {
                              if (!c.last_service_date) return "-";
                              const nextDate = new Date(c.last_service_date);
@@ -453,6 +509,31 @@ export default function CustomersPage() {
                 </div>
               </div>
             )}
+
+            {/* Installation Add-in */}
+            <div className="space-y-4 p-4 bg-green-50 rounded-xl border border-green-100">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input 
+                   type="checkbox" 
+                   checked={scheduleInstallation} 
+                   onChange={e => setScheduleInstallation(e.target.checked)}
+                   className="w-4 h-4 text-green-600 rounded"
+                />
+                <span className="text-sm font-bold text-green-800">Schedule Installation Today?</span>
+              </label>
+              
+              {scheduleInstallation && (
+                <div>
+                  <label className="text-xs text-gray-500 font-bold uppercase mb-1 block">Assign Technician</label>
+                  <select required value={selectedWorker} onChange={e => setSelectedWorker(e.target.value)} className="input-minimal rounded-xl border-green-200 shadow-sm text-gray-700 bg-white">
+                    <option value="">-- Select Technician --</option>
+                    {workers.map(w => (
+                      <option key={w.id} value={w.id}>{w.name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
           </div>
 
               <button 
@@ -651,6 +732,22 @@ export default function CustomersPage() {
                   ))}
                 </div>
               )}
+            </div>
+
+            {/* Projected Upcoming Services */}
+            <div className="mt-6 pt-4 border-t border-gray-100">
+              <h4 className="text-sm font-bold text-[#111111] mb-3">Projected Upcoming Services</h4>
+              <div className="flex flex-wrap gap-2">
+                {[1, 2, 3].map(multiplier => {
+                  const nextDate = new Date(historyCustomer.last_service_date || new Date());
+                  nextDate.setMonth(nextDate.getMonth() + (historyCustomer.service_interval_months * multiplier));
+                  return (
+                    <span key={multiplier} className="px-3 py-1.5 bg-blue-50 text-blue-700 font-bold text-xs rounded-xl border border-blue-100 uppercase tracking-widest shadow-sm">
+                      {nextDate.toLocaleDateString(undefined, { month: 'short', year: 'numeric', day: 'numeric' })}
+                    </span>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </div>

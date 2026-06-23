@@ -27,6 +27,7 @@ export default function WorkerAssignmentsPage() {
   const [serviceAmount, setServiceAmount] = useState("");
   const [paymentMode, setPaymentMode] = useState("CASH");
   const [invoiceNumber, setInvoiceNumber] = useState("");
+  const [remarks, setRemarks] = useState("");
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -59,7 +60,8 @@ export default function WorkerAssignmentsPage() {
       body: JSON.stringify({
         service_amount: serviceAmount,
         payment_mode: paymentMode,
-        invoice_number: invoiceNumber
+        invoice_number: invoiceNumber,
+        remarks: remarks
       })
     });
     setIsSubmitting(false);
@@ -77,6 +79,7 @@ export default function WorkerAssignmentsPage() {
       setServiceAmount("");
       setPaymentMode("CASH");
       setInvoiceNumber("");
+      setRemarks("");
       getAssignments();
     }, 1500);
   }
@@ -255,6 +258,11 @@ export default function WorkerAssignmentsPage() {
               <div>
                 <label className="text-xs font-bold text-gray-500 uppercase flex items-center gap-1 mb-1"><Receipt className="w-3 h-3"/> Invoice Number (Optional)</label>
                 <input value={invoiceNumber} onChange={e => setInvoiceNumber(e.target.value)} className="input-minimal rounded-xl" placeholder="INV-2026-XXXX" />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-gray-500 uppercase flex items-center gap-1 mb-1"><Wrench className="w-3 h-3"/> Remarks / Additional Features Done</label>
+                <textarea value={remarks} onChange={e => setRemarks(e.target.value)} className="input-minimal rounded-xl min-h-[80px] resize-y" placeholder="Changed filter, cleaned tank..." />
               </div>
             </div>
             
