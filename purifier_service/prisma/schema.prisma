@@ -37,6 +37,9 @@ model Customer{
   
   // Relations
   assignments Assignment[]
+
+  @@index([phone_number])
+  @@index([customer_type])
 }
 
 enum workerType{
@@ -54,6 +57,8 @@ model Worker{
 
   // Relations
   assignments Assignment[]
+
+  @@index([worker_type])
 }
 
 enum AssignmentStatus {
@@ -71,10 +76,16 @@ model Assignment {
   service_amount Float?
   payment_mode String?
   invoice_number String?
+  remarks String?
   completed_at DateTime?
   createdAt DateTime @default(now())
 
   // Relations
-  worker Worker @relation(fields: [workerId], references: [id])
-  customer Customer @relation(fields: [customerId], references: [id])
+  worker Worker @relation(fields: [workerId], references: [id], onDelete: Cascade)
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@index([service_date])
+  @@index([workerId])
+  @@index([customerId])
 }

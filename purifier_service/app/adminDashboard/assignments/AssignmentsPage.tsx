@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ClipboardList, AlertCircle, Calendar, UserCheck, CheckCircle2, User, MapPin, XCircle } from "lucide-react";
+import { ClipboardList, AlertCircle, Calendar, UserCheck, CheckCircle2, User, MapPin, XCircle, Search } from "lucide-react";
 
 type Customer = {
   id: number;
@@ -40,6 +40,38 @@ export default function AssignmentsPage() {
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+
+  // New UI states
+  const [activeTab, setActiveTab] = useState<"OVERDUE" | "THIS_WEEK" | "NEXT_WEEK" | "NEXT_MONTH">("OVERDUE");
+  const [customerSearchInput, setCustomerSearchInput] = useState("");
+  const [showSearchDropdown, setShowSearchDropdown] = useState(false);
+
+  // Filtering Logic for Tabs
+  const today = new Date();
+  const getDiffDays = (dateStr?: string) => {
+    const nextDate = dateStr ? new Date(dateStr) : new Date();
+    return Math.ceil((nextDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+  };
+
+  const overdueList = dueCustomers.filter(c => getDiffDays(c.nextServiceDate) < 0);
+  const thisWeekList = dueCustomers.filter(c => {
+    const d = getDiffDays(c.nextServiceDate);
+    return d >= 0 && d <= 7;
+  });
+  const nextWeekList = dueCustomers.filter(c => {
+    const d = getDiffDays(c.nextServiceDate);
+    return d > 7 && d <= 14;
+  });
+  const nextMonthList = dueCustomers.filter(c => {
+    const d = getDiffDays(c.nextServiceDate);
+    return d > 14;
+  });
+
+  const activeCustomersList = 
+    activeTab === "OVERDUE" ? overdueList :
+    activeTab === "THIS_WEEK" ? thisWeekList :
+    activeTab === "NEXT_WEEK" ? nextWeekList : nextMonthList;
+
 
   async function fetchData() {
     const [custRes, allCustRes, workRes, assignRes] = await Promise.all([
@@ -125,40 +157,51 @@ export default function AssignmentsPage() {
         
         {/* Due Customers List */}
         <div className="space-y-4">
-          <h2 className="text-lg font-extrabold text-[#111111] tracking-tight flex items-center gap-2 pl-2">
-            <AlertCircle className="w-5 h-5 text-red-600" />
-            Action Required 
-            {dueCustomers.length > 0 && (
-              <span className="text-sm px-2.5 py-0.5 rounded-full bg-red-100 text-red-600">
-                {dueCustomers.length} users
-              </span>
-            )}
-          </h2>
+          <div className="flex flex-col gap-3 mb-6">
+            <h2 className="text-lg font-extrabold text-[#111111] tracking-tight flex items-center gap-2 pl-2">
+              <AlertCircle className="w-5 h-5 text-red-600" />
+              Service Pipeline
+            </h2>
+            
+            {/* TABS */}
+            <div className="flex flex-wrap gap-2">
+              <button onClick={() => setActiveTab("OVERDUE")} className={`px-4 py-2 text-xs font-bold rounded-xl transition-colors ${activeTab === 'OVERDUE' ? 'bg-red-600 text-white shadow-md' : 'bg-red-50 text-red-600 hover:bg-red-100'}`}>
+                Overdue ({overdueList.length})
+              </button>
+              <button onClick={() => setActiveTab("THIS_WEEK")} className={`px-4 py-2 text-xs font-bold rounded-xl transition-colors ${activeTab === 'THIS_WEEK' ? 'bg-orange-500 text-white shadow-md' : 'bg-orange-50 text-orange-600 hover:bg-orange-100'}`}>
+                This Week ({thisWeekList.length})
+              </button>
+              <button onClick={() => setActiveTab("NEXT_WEEK")} className={`px-4 py-2 text-xs font-bold rounded-xl transition-colors ${activeTab === 'NEXT_WEEK' ? 'bg-blue-600 text-white shadow-md' : 'bg-blue-50 text-blue-600 hover:bg-blue-100'}`}>
+                Next Week ({nextWeekList.length})
+              </button>
+              <button onClick={() => setActiveTab("NEXT_MONTH")} className={`px-4 py-2 text-xs font-bold rounded-xl transition-colors ${activeTab === 'NEXT_MONTH' ? 'bg-gray-800 text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+                Later ({nextMonthList.length})
+              </button>
+            </div>
+          </div>
           
-          {dueCustomers.length === 0 ? (
+          {activeCustomersList.length === 0 ? (
             <div className="premium-card p-12 flex flex-col items-center justify-center text-center">
               <div className="icon-btn w-16 h-16 mb-4 cursor-default border-green-100">
                 <CheckCircle2 className="w-8 h-8 text-green-600" />
               </div>
-              <p className="text-xl font-bold text-[#111111]">All caught up!</p>
-              <p className="text-gray-500 font-medium mt-2">No customers are currently due for service.</p>
+              <p className="text-xl font-bold text-[#111111]">Clear queue!</p>
+              <p className="text-gray-500 font-medium mt-2">No customers pending for this timeframe.</p>
             </div>
           ) : (
             <div className="grid gap-4 max-h-[600px] overflow-y-auto pr-2">
-              {dueCustomers.map(c => {
-                const nextDate = c.nextServiceDate ? new Date(c.nextServiceDate) : new Date();
-                const diffTime = nextDate.getTime() - new Date().getTime();
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+              {activeCustomersList.map(c => {
+                const diffDays = getDiffDays(c.nextServiceDate);
                 const isOverdue = diffDays < 0;
 
                 return (
-                <div key={c.id} className="premium-card p-6 border-l-[6px] border-l-red-600">
+                <div key={c.id} className={`premium-card p-6 border-l-[6px] ${isOverdue ? 'border-l-red-600' : 'border-l-blue-500'}`}>
                   <div className="flex justify-between items-start mb-2">
                     <div>
                       <h3 className="font-extrabold text-xl text-[#111111]">{c.name}</h3>
                       <p className="text-sm text-gray-500 font-semibold mt-1">{c.phone_number}</p>
                     </div>
-                    <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${isOverdue ? 'bg-red-100 text-red-700' : 'bg-orange-100 text-orange-700'}`}>
+                    <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${isOverdue ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'}`}>
                       {isOverdue ? "Overdue" : `Due in ${diffDays} day${diffDays !== 1 ? 's' : ''}`}
                     </span>
                   </div>
@@ -176,7 +219,10 @@ export default function AssignmentsPage() {
                   </div>
                   <button 
                      type="button"
-                     onClick={() => setSelectedCustomer(c.id.toString())}
+                     onClick={() => {
+                        setSelectedCustomer(c.id.toString());
+                        setCustomerSearchInput(`${c.name} - ${c.phone_number}`);
+                     }}
                      className="mt-4 w-full py-2.5 bg-blue-50 text-blue-600 text-sm font-bold rounded-xl hover:bg-blue-100 transition-colors flex items-center justify-center gap-2"
                   >
                      Select for Dispatch
@@ -190,13 +236,63 @@ export default function AssignmentsPage() {
         {/* Assignment Form & Current Assignments */}
         <div className="space-y-8">
           <form onSubmit={assignWorker} className="premium-card p-8 space-y-6">
-            <div className="flex items-center gap-4 mb-2 border-b border-gray-100 pb-6">
-              <div className="icon-btn w-10 h-10 shrink-0 shadow-sm">
-                 <UserCheck className="w-5 h-5 text-[#111111]" />
+            <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 mb-2 border-b border-gray-100 pb-6">
+              <div className="flex items-center gap-4">
+                <div className="icon-btn w-10 h-10 shrink-0 shadow-sm">
+                   <UserCheck className="w-5 h-5 text-[#111111]" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-extrabold text-[#111111] tracking-tight">Dispatch Ticket</h2>
+                  <p className="text-xs text-gray-500 font-medium mt-1">Create a new service assignment.</p>
+                </div>
               </div>
-              <div>
-                <h2 className="text-xl font-extrabold text-[#111111] tracking-tight">Dispatch Ticket</h2>
-                <p className="text-xs text-gray-500 font-medium mt-1">Create a new service assignment.</p>
+              <div className="relative w-full xl:w-auto">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                <input 
+                  type="text" 
+                  placeholder="Filter customers..." 
+                  value={customerSearchInput}
+                  onChange={e => {
+                    setCustomerSearchInput(e.target.value);
+                    setShowSearchDropdown(true);
+                  }}
+                  onFocus={() => setShowSearchDropdown(true)}
+                  onBlur={() => setTimeout(() => setShowSearchDropdown(false), 200)}
+                  className="input-minimal !pl-10 text-sm py-2 min-w-[200px]"
+                />
+                
+                {showSearchDropdown && customerSearchInput && (
+                  <div className="absolute top-full right-0 mt-2 w-64 bg-white border border-gray-200 rounded-xl shadow-xl z-50 max-h-60 overflow-y-auto">
+                    {(() => {
+                      const safeSearch = customerSearchInput.toLowerCase();
+                      const matched = allCustomers.filter(c => 
+                        (c.name || "").toLowerCase().includes(safeSearch) || 
+                        (c.phone_number || "").includes(safeSearch)
+                      );
+                      
+                      if (matched.length === 0) {
+                        return <div className="p-3 text-sm text-gray-500 text-center font-medium">No matches found</div>;
+                      }
+                      
+                      return matched.map(c => (
+                        <button
+                          key={c.id}
+                          type="button"
+                          className="w-full text-left px-4 py-3 hover:bg-gray-50 border-b border-gray-50 last:border-0 transition-colors flex flex-col gap-0.5"
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            setSelectedCustomer(c.id.toString());
+                            setCustomerSearchInput("");
+                            setShowSearchDropdown(false);
+                          }}
+                        >
+                          <span className="text-sm font-bold text-[#111111]">{c.name}</span>
+                          <span className="text-xs text-gray-500 font-medium">{c.phone_number}</span>
+                        </button>
+                      ));
+                    })()}
+                  </div>
+                )}
               </div>
             </div>
             
@@ -206,6 +302,7 @@ export default function AssignmentsPage() {
                   value={selectedCustomer} 
                   onChange={(e) => setSelectedCustomer(e.target.value)}
                   className="input-minimal text-gray-700"
+                  required
                 >
                   <option value="">-- Select Customer --</option>
                   {allCustomers.map(c => (

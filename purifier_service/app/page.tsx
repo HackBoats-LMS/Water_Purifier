@@ -98,21 +98,21 @@ export default async function Home() {
           </div>
 
           <div className="grid md:grid-cols-3 gap-8 text-left">
-            <div className="bg-white p-8 rounded-[2rem] border border-blue-50 shadow-2xl shadow-blue-900/10 hover:-translate-y-2 transition-transform duration-300">
+            <div className="bg-white p-8 rounded-[2rem] border border-blue-50 shadow-2xl shadow-blue-900/10">
                <div className="w-14 h-14 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mb-6">
                  <Clock className="w-7 h-7" strokeWidth={2.5} />
                </div>
                <h3 className="text-2xl font-black text-[#111111] mb-3">Automated AMC</h3>
                <p className="text-gray-500 font-medium leading-relaxed">System auto-calculates service intervals and flags due customers, ensuring no service window is ever missed.</p>
             </div>
-            <div className="bg-white p-8 rounded-[2rem] border border-blue-50 shadow-2xl shadow-blue-900/10 hover:-translate-y-2 transition-transform duration-300">
+            <div className="bg-white p-8 rounded-[2rem] border border-blue-50 shadow-2xl shadow-blue-900/10">
                <div className="w-14 h-14 bg-green-50 text-green-600 rounded-2xl flex items-center justify-center mb-6">
                  <ShieldCheck className="w-7 h-7" strokeWidth={2.5} />
                </div>
                <h3 className="text-2xl font-black text-[#111111] mb-3">Warranty Tracking</h3>
                <p className="text-gray-500 font-medium leading-relaxed">Easily track In-House warranties and expiry dates per customer, preventing out-of-warranty free service claims.</p>
             </div>
-            <div className="bg-white p-8 rounded-[2rem] border border-blue-50 shadow-2xl shadow-blue-900/10 hover:-translate-y-2 transition-transform duration-300">
+            <div className="bg-white p-8 rounded-[2rem] border border-blue-50 shadow-2xl shadow-blue-900/10">
                <div className="w-14 h-14 bg-purple-50 text-purple-600 rounded-2xl flex items-center justify-center mb-6">
                  <Settings className="w-7 h-7" strokeWidth={2.5} />
                </div>

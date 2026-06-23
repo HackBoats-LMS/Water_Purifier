@@ -13,7 +13,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     const resolvedParams = await params;
     const assignmentId = parseInt(resolvedParams.id);
     const workerId = parseInt(session.user.id);
-    const { service_amount, payment_mode, invoice_number } = await request.json();
+    const { service_amount, payment_mode, invoice_number, remarks } = await request.json();
 
     // Verify assignment belongs to this worker
     const assignment = await prisma.assignment.findUnique({
@@ -43,6 +43,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
           service_amount: service_amount ? parseFloat(service_amount) : null,
           payment_mode,
           invoice_number,
+          remarks,
           completed_at: completedAt
         }
       });
