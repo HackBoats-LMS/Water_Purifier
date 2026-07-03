@@ -65,3 +65,32 @@ export async function PATCH(
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await getServerSession(authConfig);
+    if (session?.user?.role !== "ADMIN") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const resolvedParams = await params;
+    const customerId = parseInt(resolvedParams.id);
+
+    if (isNaN(customerId)) {
+      return NextResponse.json({ error: "Invalid customer ID" }, { status: 400 });
+    }
+
+    await prisma.customer.delete({
+      where: { id: customerId }
+    });
+
+    return NextResponse.json({ message: "Customer deleted successfully" }, { status: 200 });
+
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+  }
+}

@@ -11,6 +11,7 @@ type Assignment = {
   service_amount: number | null;
   status: string;
   completed_at: string | null;
+  remarks?: string | null;
   worker: { name: string; phone_number: string };
   customer: { name: string; phone_number: string; address: string };
 };
@@ -235,6 +236,7 @@ export default function SalesPage() {
                 ) : (
                   filteredAssignments.map((a, index) => (
                     <tr
+                      onDoubleClick={() => setViewingAssignment(a)}
                       key={a.id}
                       className="hover:bg-white transition-colors duration-200 group"
                     >
@@ -270,10 +272,10 @@ export default function SalesPage() {
                         {a.worker.name}
                       </td>
                       <td className="px-6 py-4 flex items-center justify-center gap-2">
-                        <button onClick={() => setViewingAssignment(a)} className="p-2 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors opacity-0 group-hover:opacity-100" title="View Details">
+                        <button onClick={() => setViewingAssignment(a)} className="p-2 rounded-xl bg-blue-50 text-blue-600 " title="View Details">
                           <Eye className="w-4 h-4" />
                         </button>
-                        <button onClick={() => handleEditClick(a)} className="p-2 rounded-xl bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors opacity-0 group-hover:opacity-100" title="Edit">
+                        <button onClick={() => handleEditClick(a)} className="p-2 rounded-xl bg-gray-100 text-gray-600 " title="Edit">
                           <Edit2 className="w-4 h-4" />
                         </button>
                       </td>
@@ -339,6 +341,13 @@ export default function SalesPage() {
                 <p className="text-gray-700"><strong>Payment Mode:</strong> {viewingAssignment.payment_mode || "N/A"}</p>
                 <p className="text-gray-700"><strong>Service Amount:</strong> {viewingAssignment.service_amount !== null ? `₹${viewingAssignment.service_amount}` : "N/A"}</p>
               </div>
+
+              {viewingAssignment.remarks && (
+                <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                  <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-1">Feedback / Service Details</p>
+                  <p className="text-gray-700 whitespace-pre-wrap">{viewingAssignment.remarks}</p>
+                </div>
+              )}
             </div>
           </div>
         </div>

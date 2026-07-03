@@ -23,6 +23,7 @@ type Assignment = {
   id: number;
   service_date: string;
   status: string;
+  remarks?: string | null;
   worker: { name: string; phone_number: string };
   customer: { name: string; address: string; purifier_model_name: string };
 };
@@ -37,7 +38,7 @@ export default function AssignmentsPage() {
   const [selectedCustomer, setSelectedCustomer] = useState("");
   const [selectedWorker, setSelectedWorker] = useState("");
   const [serviceDate, setServiceDate] = useState("");
-  
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
@@ -67,10 +68,10 @@ export default function AssignmentsPage() {
     return d > 14;
   });
 
-  const activeCustomersList = 
+  const activeCustomersList =
     activeTab === "OVERDUE" ? overdueList :
-    activeTab === "THIS_WEEK" ? thisWeekList :
-    activeTab === "NEXT_WEEK" ? nextWeekList : nextMonthList;
+      activeTab === "THIS_WEEK" ? thisWeekList :
+        activeTab === "NEXT_WEEK" ? nextWeekList : nextMonthList;
 
 
   async function fetchData() {
@@ -119,7 +120,7 @@ export default function AssignmentsPage() {
     setSelectedCustomer("");
     setSelectedWorker("");
     setServiceDate("");
-    
+
     // Refresh lists
     await fetchData();
   }
@@ -145,7 +146,7 @@ export default function AssignmentsPage() {
 
   return (
     <div className="space-y-6 h-full pb-10">
-      
+
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8 pl-2">
         <div>
           <h1 className="text-3xl font-extrabold text-[#111111] tracking-tight">Service Dispatch</h1>
@@ -154,7 +155,7 @@ export default function AssignmentsPage() {
       </div>
 
       <div className="grid lg:grid-cols-2 gap-8">
-        
+
         {/* Due Customers List */}
         <div className="space-y-4">
           <div className="flex flex-col gap-3 mb-6">
@@ -162,7 +163,7 @@ export default function AssignmentsPage() {
               <AlertCircle className="w-5 h-5 text-red-600" />
               Service Pipeline
             </h2>
-            
+
             {/* TABS */}
             <div className="flex flex-wrap gap-2">
               <button onClick={() => setActiveTab("OVERDUE")} className={`px-4 py-2 text-xs font-bold rounded-xl transition-colors ${activeTab === 'OVERDUE' ? 'bg-red-600 text-white shadow-md' : 'bg-red-50 text-red-600 hover:bg-red-100'}`}>
@@ -179,7 +180,7 @@ export default function AssignmentsPage() {
               </button>
             </div>
           </div>
-          
+
           {activeCustomersList.length === 0 ? (
             <div className="premium-card p-12 flex flex-col items-center justify-center text-center">
               <div className="icon-btn w-16 h-16 mb-4 cursor-default border-green-100">
@@ -195,51 +196,55 @@ export default function AssignmentsPage() {
                 const isOverdue = diffDays < 0;
 
                 return (
-                <div key={c.id} className={`premium-card p-6 border-l-[6px] ${isOverdue ? 'border-l-red-600' : 'border-l-blue-500'}`}>
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <h3 className="font-extrabold text-xl text-[#111111]">{c.name}</h3>
-                      <p className="text-sm text-gray-500 font-semibold mt-1">{c.phone_number}</p>
+                  <div key={c.id} className={`premium-card p-6 border-l-[6px] ${isOverdue ? 'border-l-red-600' : 'border-l-blue-500'}`}>
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <h3 className="font-extrabold text-xl text-[#111111]">{c.name}</h3>
+                        <p className="text-sm text-gray-500 font-semibold mt-1">{c.phone_number}</p>
+                      </div>
+                      <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${isOverdue ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'}`}>
+                        {isOverdue ? "Overdue" : `Due in ${diffDays} day${diffDays !== 1 ? 's' : ''}`}
+                      </span>
                     </div>
-                    <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${isOverdue ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'}`}>
-                      {isOverdue ? "Overdue" : `Due in ${diffDays} day${diffDays !== 1 ? 's' : ''}`}
-                    </span>
-                  </div>
-                  
-                  <div className="mt-4 text-sm text-[#111111] font-medium bg-gray-50 p-3 rounded-xl border border-gray-100 flex items-start gap-2">
-                    <MapPin className="w-4 h-4 text-gray-400 shrink-0 mt-0.5" />
-                    <p className="line-clamp-2">{c.address}</p>
-                  </div>
-                  
-                  <div className="mt-5 pt-4 border-t border-gray-100 flex items-center justify-between text-xs font-bold uppercase tracking-wider text-gray-500">
-                     <span>Model: {c.purifier_model_name}</span>
-                     <span>
+
+                    <div className="mt-4 text-sm text-[#111111] font-medium bg-gray-50 p-3 rounded-xl border border-gray-100 flex items-start gap-2">
+                      <MapPin className="w-4 h-4 text-gray-400 shrink-0 mt-0.5" />
+                      <p className="line-clamp-2">{c.address}</p>
+                    </div>
+
+                    <div className="mt-5 pt-4 border-t border-gray-100 flex items-center justify-between text-xs font-bold uppercase tracking-wider text-gray-500">
+                      <span>Model: {c.purifier_model_name}</span>
+                      <span>
                         Last: {c.last_service_date ? new Date(c.last_service_date).toLocaleDateString() : 'Never'}
-                     </span>
-                  </div>
-                  <button 
-                     type="button"
-                     onClick={() => {
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
                         setSelectedCustomer(c.id.toString());
                         setCustomerSearchInput(`${c.name} - ${c.phone_number}`);
-                     }}
-                     className="mt-4 w-full py-2.5 bg-blue-50 text-blue-600 text-sm font-bold rounded-xl hover:bg-blue-100 transition-colors flex items-center justify-center gap-2"
-                  >
-                     Select for Dispatch
-                  </button>
-                </div>
-              )})}
+                      }}
+                      className="mt-4 w-full py-2.5 bg-blue-50 text-blue-600 text-sm font-bold rounded-xl hover:bg-blue-100 transition-colors flex items-center justify-center gap-2"
+                    >
+                      Select for Dispatch
+                    </button>
+                  </div>
+                )
+              })}
             </div>
           )}
         </div>
 
         {/* Assignment Form & Current Assignments */}
         <div className="space-y-8">
+          <h1 className="text-xl font-extrabold text-[#111111] tracking-tight">Create Ticket Dispatch</h1>
+          
           <form onSubmit={assignWorker} className="premium-card p-8 space-y-6">
+
             <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 mb-2 border-b border-gray-100 pb-6">
               <div className="flex items-center gap-4">
                 <div className="icon-btn w-10 h-10 shrink-0 shadow-sm">
-                   <UserCheck className="w-5 h-5 text-[#111111]" />
+                  <UserCheck className="w-5 h-5 text-[#111111]" />
                 </div>
                 <div>
                   <h2 className="text-xl font-extrabold text-[#111111] tracking-tight">Dispatch Ticket</h2>
@@ -248,9 +253,9 @@ export default function AssignmentsPage() {
               </div>
               <div className="relative w-full xl:w-auto">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                <input 
-                  type="text" 
-                  placeholder="Filter customers..." 
+                <input
+                  type="text"
+                  placeholder="Filter customers..."
                   value={customerSearchInput}
                   onChange={e => {
                     setCustomerSearchInput(e.target.value);
@@ -260,20 +265,20 @@ export default function AssignmentsPage() {
                   onBlur={() => setTimeout(() => setShowSearchDropdown(false), 200)}
                   className="input-minimal !pl-10 text-sm py-2 min-w-[200px]"
                 />
-                
+
                 {showSearchDropdown && customerSearchInput && (
                   <div className="absolute top-full right-0 mt-2 w-64 bg-white border border-gray-200 rounded-xl shadow-xl z-50 max-h-60 overflow-y-auto">
                     {(() => {
                       const safeSearch = customerSearchInput.toLowerCase();
-                      const matched = allCustomers.filter(c => 
-                        (c.name || "").toLowerCase().includes(safeSearch) || 
+                      const matched = allCustomers.filter(c =>
+                        (c.name || "").toLowerCase().includes(safeSearch) ||
                         (c.phone_number || "").includes(safeSearch)
                       );
-                      
+
                       if (matched.length === 0) {
                         return <div className="p-3 text-sm text-gray-500 text-center font-medium">No matches found</div>;
                       }
-                      
+
                       return matched.map(c => (
                         <button
                           key={c.id}
@@ -295,11 +300,11 @@ export default function AssignmentsPage() {
                 )}
               </div>
             </div>
-            
+
             <div className="space-y-5">
               <div>
-                <select 
-                  value={selectedCustomer} 
+                <select
+                  value={selectedCustomer}
                   onChange={(e) => setSelectedCustomer(e.target.value)}
                   className="input-minimal text-gray-700"
                   required
@@ -312,8 +317,8 @@ export default function AssignmentsPage() {
               </div>
 
               <div>
-                <select 
-                  value={selectedWorker} 
+                <select
+                  value={selectedWorker}
                   onChange={(e) => setSelectedWorker(e.target.value)}
                   className="input-minimal text-gray-700"
                 >
@@ -325,18 +330,18 @@ export default function AssignmentsPage() {
               </div>
 
               <div className="relative">
-                <input 
-                  type="date" 
-                  required 
-                  value={serviceDate} 
-                  onChange={e => setServiceDate(e.target.value)} 
-                  className="input-minimal [color-scheme:light]" 
+                <input
+                  type="date"
+                  required
+                  value={serviceDate}
+                  onChange={e => setServiceDate(e.target.value)}
+                  className="input-minimal [color-scheme:light]"
                 />
               </div>
             </div>
 
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               disabled={isSubmitting || isSuccess}
               className={`tactile-btn w-full mt-6 shadow-xl flex items-center justify-center gap-2 transition-all ${isSuccess ? '!bg-green-500 !scale-100' : ''} ${isSubmitting ? 'opacity-80' : ''}`}
             >
@@ -388,7 +393,13 @@ export default function AssignmentsPage() {
                     </td>
                     <td className="px-5 py-4">
                       <div className="text-sm font-bold text-[#111111]">{a.customer.name}</div>
-                      <div className="text-xs text-gray-500 mt-0.5">{a.customer.purifier_model_name}</div>
+                      <div className="text-xs text-gray-500 mt-0.5 mb-1">{a.customer.purifier_model_name}</div>
+                      {a.remarks && (
+                        <div className="mt-2 text-xs text-gray-600 bg-gray-50 p-2 rounded-lg border border-gray-100 whitespace-pre-wrap max-w-[200px] lg:max-w-xs">
+                          <span className="font-bold text-gray-700 block mb-0.5">Feedback / Notes:</span>
+                          {a.remarks}
+                        </div>
+                      )}
                     </td>
                     <td className="px-5 py-4">
                       <span className={`px-2 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-widest ${a.status === 'COMPLETED' ? 'bg-green-100 text-green-700' : a.status === 'CANCELLED' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'}`}>
@@ -397,7 +408,7 @@ export default function AssignmentsPage() {
                     </td>
                     <td className="px-5 py-4 text-right">
                       {a.status === "PENDING" && (
-                        <button 
+                        <button
                           onClick={() => cancelAssignment(a.id)}
                           className="text-red-500 hover:text-red-700 transition-colors"
                           title="Cancel Service"

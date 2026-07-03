@@ -47,3 +47,29 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
+
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const session = await getServerSession(authConfig);
+    if (session?.user?.role !== "ADMIN") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const resolvedParams = await params;
+    const workerId = parseInt(resolvedParams.id);
+
+    if (isNaN(workerId)) {
+      return NextResponse.json({ error: "Invalid worker ID" }, { status: 400 });
+    }
+
+    await prisma.worker.delete({
+      where: { id: workerId }
+    });
+
+    return NextResponse.json({ message: "Worker deleted successfully" }, { status: 200 });
+
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
