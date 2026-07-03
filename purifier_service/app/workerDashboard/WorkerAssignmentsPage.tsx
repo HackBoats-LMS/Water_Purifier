@@ -54,6 +54,7 @@ export default function WorkerAssignmentsPage() {
     if (!completingTask) return;
 
     setIsSubmitting(true);
+    
     const res = await fetch(`/api/worker-assignments/${completingTask.id}/complete`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -261,8 +262,8 @@ export default function WorkerAssignmentsPage() {
               </div>
 
               <div>
-                <label className="text-xs font-bold text-gray-500 uppercase flex items-center gap-1 mb-1"><Wrench className="w-3 h-3"/> Remarks / Additional Features Done</label>
-                <textarea value={remarks} onChange={e => setRemarks(e.target.value)} className="input-minimal rounded-xl min-h-[80px] resize-y" placeholder="Changed filter, cleaned tank..." />
+                <label className="text-xs font-bold text-gray-500 uppercase flex items-center gap-1 mb-1"><Wrench className="w-3 h-3"/> Feedback / Service Details</label>
+                <textarea required value={remarks} onChange={e => setRemarks(e.target.value)} className="input-minimal rounded-xl min-h-[100px] resize-y" placeholder="Type what you have done during the service (e.g. replaced parts, cleaned filters)..." />
               </div>
             </div>
             

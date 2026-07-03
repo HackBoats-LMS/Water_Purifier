@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, UserCog, KeySquare, Search, CheckCircle2 } from "lucide-react";
+import { Plus, UserCog, KeySquare, Search, CheckCircle2, Trash2 } from "lucide-react";
 
 type Worker = {
   id: number;
@@ -122,6 +122,23 @@ export default function WorkersPage() {
     setNewPassword("");
   }
 
+  async function deleteWorker(id: number) {
+    if (!confirm("Are you sure you want to delete this technician? All their assignments will be affected.")) return;
+    
+    try {
+      const res = await fetch(`/api/workers/${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const errorData = await res.json();
+        alert(`Failed to delete technician: ${errorData.error}`);
+        return;
+      }
+      getWorkers();
+    } catch (err) {
+      console.error(err);
+      alert("An error occurred while deleting the technician.");
+    }
+  }
+
   useEffect(() => {
     getWorkers();
   }, []);
@@ -190,7 +207,8 @@ export default function WorkersPage() {
                     </tr>
                   ) : (
                     filteredWorkers.map((w) => (
-                      <tr key={w.id} className="hover:bg-white transition-colors duration-200 group">
+                      <tr 
+                      key={w.id} className="hover:bg-white transition-colors duration-200 group">
                         <td className="px-6 py-4 text-sm text-[#111111] font-bold">
                           {w.name}
                         </td>
@@ -208,17 +226,24 @@ export default function WorkersPage() {
                               setEditPhone(w.phone_number);
                               setEditEmail(w.email || "");
                             }}
-                            className="p-2 rounded-xl bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors opacity-0 group-hover:opacity-100"
+                            className="p-2 rounded-xl bg-gray-100 text-gray-600"
                             title="Edit Details"
                           >
                             <UserCog className="w-4 h-4" />
                           </button>
                           <button 
                             onClick={() => setPasswordWorker(w)}
-                            className="p-2 rounded-xl bg-orange-50 text-orange-600 hover:bg-orange-100 transition-colors opacity-0 group-hover:opacity-100"
+                            className="p-2 rounded-xl bg-orange-50 text-orange-600"
                             title="Change Password"
                           >
                             <KeySquare className="w-4 h-4" />
+                          </button>
+                          <button 
+                            onClick={() => deleteWorker(w.id)}
+                            className="p-2 rounded-xl bg-red-50 text-red-600"
+                            title="Delete Technician"
+                          >
+                            <Trash2 className="w-4 h-4" />
                           </button>
                         </td>
                       </tr>

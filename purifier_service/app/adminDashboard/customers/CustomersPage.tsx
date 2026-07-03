@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, CheckSquare, Square, History, X, Edit2, Search, Download } from "lucide-react";
+import { Plus, CheckSquare, Square, History, X, Edit2, Search, Download, Trash2 } from "lucide-react";
 
 type Customer = {
   id: number;
@@ -235,6 +235,24 @@ export default function CustomersPage() {
     }
   }
 
+  async function deleteCustomer(id: number, e: React.MouseEvent) {
+    e.stopPropagation();
+    if (!confirm("Are you sure you want to delete this customer? All their associated service assignments will also be deleted. This action cannot be undone.")) return;
+    
+    try {
+      const res = await fetch(`/api/customers/${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const errorData = await res.json();
+        alert(`Failed to delete customer: ${errorData.error}`);
+        return;
+      }
+      getCustomers();
+    } catch (err) {
+      console.error(err);
+      alert("An error occurred while deleting the customer.");
+    }
+  }
+
   useEffect(() => {
     getCustomers();
     getWorkers();
@@ -391,17 +409,24 @@ export default function CustomersPage() {
                         <td className="px-6 py-4 flex items-center justify-center gap-2">
                           <button 
                             onClick={(e) => handleEditClick(c, e)}
-                            className="p-2 rounded-xl bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors opacity-0 group-hover:opacity-100"
+                            className="p-2 rounded-xl bg-gray-100 text-gray-600"
                             title="Edit Customer"
                           >
                             <Edit2 className="w-4 h-4" />
                           </button>
                           <button 
                             onClick={(e) => { e.stopPropagation(); fetchHistory(c); }}
-                            className="p-2 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors opacity-0 group-hover:opacity-100"
+                            className="p-2 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100"
                             title="View Service History"
                           >
                             <History className="w-4 h-4" />
+                          </button>
+                          <button 
+                            onClick={(e) => deleteCustomer(c.id, e)}
+                            className="p-2 rounded-xl bg-red-50 text-red-600"
+                            title="Delete Customer"
+                          >
+                            <Trash2 className="w-4 h-4" />
                           </button>
                         </td>
                       </tr>
@@ -728,6 +753,13 @@ export default function CustomersPage() {
                           </div>
                         )}
                       </div>
+                      
+                      {task.remarks && (
+                        <div className="mt-3 pt-3 border-t border-gray-200">
+                          <p className="text-xs text-gray-500 font-bold uppercase mb-1">Feedback / Service Details</p>
+                          <p className="text-sm text-gray-800 whitespace-pre-wrap">{task.remarks}</p>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>

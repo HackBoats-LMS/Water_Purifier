@@ -12,7 +12,6 @@ export async function POST(request: NextRequest) {
     }
 
     // Safely delete existing non-admin workers, customers, assignments
-    // Note: Admin should have role='ADMIN'. Let's avoid deleting the current admin.
     await prisma.assignment.deleteMany({});
     await prisma.customer.deleteMany({});
     await prisma.worker.deleteMany({
@@ -23,81 +22,89 @@ export async function POST(request: NextRequest) {
 
     const hashedPassword = await bcrypt.hash("password123", 10);
 
-    // Create Workers
-    const worker1 = await prisma.worker.create({
-      data: { name: "Ramesh FieldTech", phone_number: "9876543210", passwordHash: hashedPassword, worker_type: "WORKER" }
-    });
-    const worker2 = await prisma.worker.create({
-      data: { name: "Suresh Technician", phone_number: "8765432109", passwordHash: hashedPassword, worker_type: "WORKER" }
-    });
+    // Create 15 Workers
+    const workersData = Array.from({ length: 15 }).map((_, i) => ({
+      name: `Worker ${i + 1}`,
+      phone_number: `98765432${i.toString().padStart(2, '0')}`,
+      passwordHash: hashedPassword,
+      worker_type: "WORKER" as const
+    }));
+    await prisma.worker.createMany({ data: workersData });
+    const workers = await prisma.worker.findMany({ where: { worker_type: "WORKER" } });
 
-    // Create Customers
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    // Helper functions
+    const now = new Date();
+    
+    // Function to calculate last_service_date to result in a specific nextServiceDate
+    // nextServiceDate = last_service_date + 3 months
+    // so last_service_date = nextServiceDate - 3 months
+    const getTargetLastServiceDate = (diffDaysFromToday: number) => {
+      const targetNextService = new Date(now);
+      targetNextService.setDate(targetNextService.getDate() + diffDaysFromToday);
+      
+      const lastService = new Date(targetNextService);
+      lastService.setMonth(lastService.getMonth() - 3);
+      return lastService;
+    };
 
-    const ninetyDaysAgo = new Date();
-    ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 95); // Overdue
+    const customersData: any[] = [];
+    
+    // We need around 30 customers. We will split them into 4 groups:
+    // 7 Overdue (< 0 days) -> e.g. -5 days
+    // 8 This week (0 to 7 days) -> e.g. +3 days
+    // 8 Next week (8 to 14 days) -> e.g. +10 days
+    // 7 Later (> 14 days, but < 45 days so they show up) -> e.g. +20 days
 
-    const cust1 = await prisma.customer.create({
-      data: { name: "John Doe", phone_number: "9998887776", address: "123 Main St, Block A", purifier_model_name: "AquaGuard Pro", customer_type: "IN_HOUSE", service_interval_months: 3, last_service_date: thirtyDaysAgo, purchase_date: new Date("2023-01-15"), warranty_duration_months: 12, warranty_expiry_date: new Date("2024-01-15") }
-    });
-
-    const cust2 = await prisma.customer.create({
-      data: { name: "Jane Smith", phone_number: "9998887775", address: "456 Oak Lane, Sector 4", purifier_model_name: "Kent RO Plus", customer_type: "External", service_interval_months: 6, last_service_date: ninetyDaysAgo }
-    });
-
-    const cust3 = await prisma.customer.create({
-      data: { name: "Ravi Kumar", phone_number: "9998887774", address: "789 Pine Road, Suite 2", purifier_model_name: "Livpure Zinger", customer_type: "IN_HOUSE", service_interval_months: 3, last_service_date: ninetyDaysAgo, purchase_date: new Date("2026-01-01"), warranty_duration_months: 24, warranty_expiry_date: new Date("2028-01-01") }
-    });
-
-    // Create Assignments
-    // 1 Completed
-    await prisma.assignment.create({
-      data: {
-        workerId: worker1.id,
-        customerId: cust1.id,
-        service_date: thirtyDaysAgo,
-        status: "COMPLETED",
-        service_amount: 450.00,
-        payment_mode: "CASH",
-        completed_at: thirtyDaysAgo,
-        invoice_number: "INV-2026-0001"
+    const generateCustomers = (count: number, startDays: number, endDays: number, offset: number) => {
+      for (let i = 0; i < count; i++) {
+        const randomDiff = Math.floor(Math.random() * (endDays - startDays + 1)) + startDays;
+        const lastServiceDate = getTargetLastServiceDate(randomDiff);
+        const index = offset + i;
+        
+        customersData.push({
+          name: `Customer ${index + 1}`,
+          phone_number: `99988877${index.toString().padStart(2, '0')}`,
+          address: `Address ${index + 1}, Some Block`,
+          purifier_model_name: index % 2 === 0 ? "AquaGuard Pro" : "Kent RO Plus",
+          customer_type: index % 3 === 0 ? "External" : "IN_HOUSE",
+          service_interval_months: 3,
+          last_service_date: lastServiceDate
+        });
       }
-    });
+    };
 
-    // 1 Cancelled
-    await prisma.assignment.create({
-      data: {
-        workerId: worker2.id,
-        customerId: cust2.id,
-        service_date: new Date(),
-        status: "CANCELLED"
-      }
-    });
+    generateCustomers(7, -15, -1, 0); // Overdue
+    generateCustomers(8, 0, 6, 7);    // This week
+    generateCustomers(8, 8, 13, 15);  // Next week
+    generateCustomers(7, 15, 30, 23); // Later
 
-    // 2 Pending (from overdue customers)
-    await prisma.assignment.create({
-      data: {
-        workerId: worker1.id,
-        customerId: cust2.id,
-        service_date: new Date(),
-        status: "PENDING"
-      }
-    });
+    await prisma.customer.createMany({ data: customersData });
+    const customers = await prisma.customer.findMany();
 
-    await prisma.assignment.create({
-      data: {
-        workerId: worker2.id,
-        customerId: cust3.id,
-        service_date: new Date(),
-        status: "PENDING"
+    // Create 1 Completed Assignment (Service Record) for each customer on their last_service_date
+    const assignmentsData: any[] = [];
+    for (let i = 0; i < customers.length; i++) {
+      const cust = customers[i];
+      if (cust.last_service_date) {
+        assignmentsData.push({
+          workerId: workers[i % workers.length].id,
+          customerId: cust.id,
+          service_date: cust.last_service_date,
+          status: "COMPLETED" as const,
+          service_amount: 450.00,
+          payment_mode: "CASH",
+          completed_at: cust.last_service_date,
+          invoice_number: `INV-2026-${(1000 + i).toString()}`
+        });
       }
-    });
+    }
+
+    await prisma.assignment.createMany({ data: assignmentsData });
 
     return NextResponse.json({ message: "Mock data generated successfully." }, { status: 200 });
 
   } catch (error) {
-    console.error(error);
+    console.error("Mock API Error:", error);
     return NextResponse.json({ error: "Failed to generate mock data." }, { status: 500 });
   }
 }
