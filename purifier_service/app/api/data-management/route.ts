@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authConfig } from "@/lib/auth";
+import { formatDate } from "@/lib/utils";
 
 export async function GET(request: NextRequest) {
   try {
@@ -36,14 +37,14 @@ export async function GET(request: NextRequest) {
     const csvHeaders = ["Invoice No", "Service Date", "Status", "Customer Name", "Customer Phone", "Payment Mode", "Service Amount", "Worker Name", "Completed At"];
     const csvRows = assignments.map(a => [
       a.invoice_number || `PM-${new Date(a.service_date).getFullYear()}-${a.id}`,
-      new Date(a.service_date).toLocaleDateString(),
+      formatDate(a.service_date),
       a.status,
       `"${a.customer.name}"`,
       a.customer.phone_number,
       a.payment_mode || "N/A",
       a.service_amount?.toString() || "0",
       `"${a.worker.name}"`,
-      a.completed_at ? new Date(a.completed_at).toLocaleDateString() : "N/A"
+      a.completed_at ? formatDate(a.completed_at) : "N/A"
     ]);
 
     const csvContent = [csvHeaders.join(","), ...csvRows.map(row => row.join(","))].join("\n");

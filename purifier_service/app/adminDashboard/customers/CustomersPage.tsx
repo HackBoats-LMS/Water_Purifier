@@ -2,12 +2,17 @@
 
 import { useEffect, useState } from "react";
 import { Plus, CheckSquare, Square, History, X, Edit2, Search, Download, Trash2 } from "lucide-react";
+import { formatDate } from "@/lib/utils";
 
 type Customer = {
   id: number;
   name: string;
   phone_number: string;
   address: string;
+  house_no?: string | null;
+  building_name?: string | null;
+  landmark?: string | null;
+  pincode?: string | null;
   purifier_model_name: string;
   customer_type: string;
   service_interval_months: number;
@@ -27,6 +32,7 @@ export default function CustomersPage() {
   // Add Customer extra states
   const [scheduleInstallation, setScheduleInstallation] = useState(false);
   const [selectedWorker, setSelectedWorker] = useState("");
+  const [installationComplaint, setInstallationComplaint] = useState("");
 
   // History State
   const [historyCustomer, setHistoryCustomer] = useState<Customer | null>(null);
@@ -41,6 +47,10 @@ export default function CustomersPage() {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
+  const [houseNo, setHouseNo] = useState("");
+  const [buildingName, setBuildingName] = useState("");
+  const [landmark, setLandmark] = useState("");
+  const [pincode, setPincode] = useState("");
   const [modelName, setModelName] = useState("");
   const [email, setEmail] = useState("");
   const [purchaseDate, setPurchaseDate] = useState("");
@@ -84,8 +94,8 @@ export default function CustomersPage() {
       c.purifier_model_name,
       c.customer_type,
       c.service_interval_months,
-      c.purchase_date ? new Date(c.purchase_date).toLocaleDateString() : "",
-      c.warranty_expiry_date ? new Date(c.warranty_expiry_date).toLocaleDateString() : ""
+      c.purchase_date ? formatDate(c.purchase_date) : "",
+      c.warranty_expiry_date ? formatDate(c.warranty_expiry_date) : ""
     ]);
 
     const csvContent = [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
@@ -109,6 +119,10 @@ export default function CustomersPage() {
       phone_number: phone,
       email: email || undefined,
       address,
+      house_no: houseNo || undefined,
+      building_name: buildingName || undefined,
+      landmark: landmark || undefined,
+      pincode: pincode || undefined,
       purifier_model_name: modelName,
       customer_type: customerType,
       service_interval_months: finalInterval,
@@ -138,19 +152,20 @@ export default function CustomersPage() {
        await fetch("/api/assignments", {
          method: "POST",
          headers: { "Content-Type": "application/json" },
-         body: JSON.stringify({
+          body: JSON.stringify({
             customerId: newCustomer.id.toString(),
             workerId: selectedWorker,
-            service_date: new Date().toISOString().split('T')[0]
-         })
+            service_date: new Date().toISOString().split('T')[0],
+            complaint: installationComplaint || undefined
+          })
        });
     }
 
     setIsSuccess(true);
     setTimeout(() => {
       setIsSuccess(false);
-      setName(""); setPhone(""); setEmail(""); setAddress(""); setModelName(""); setPurchaseDate(""); setWarrantyDuration(""); setCustomerType("IN_HOUSE"); setIntervalType("3"); setCustomInterval("1");
-      setScheduleInstallation(false); setSelectedWorker("");
+      setName(""); setPhone(""); setEmail(""); setAddress(""); setHouseNo(""); setBuildingName(""); setLandmark(""); setPincode(""); setModelName(""); setPurchaseDate(""); setWarrantyDuration(""); setCustomerType("IN_HOUSE"); setIntervalType("3"); setCustomInterval("1");
+      setScheduleInstallation(false); setSelectedWorker(""); setInstallationComplaint("");
       setShowAddModal(false);
       getCustomers();
     }, 1500);
@@ -163,6 +178,10 @@ export default function CustomersPage() {
     setPhone(c.phone_number);
     setEmail(c.email || "");
     setAddress(c.address);
+    setHouseNo(c.house_no || "");
+    setBuildingName(c.building_name || "");
+    setLandmark(c.landmark || "");
+    setPincode(c.pincode || "");
     setModelName(c.purifier_model_name);
     setCustomerType(c.customer_type);
     setPurchaseDate(c.purchase_date ? new Date(c.purchase_date).toISOString().split('T')[0] : "");
@@ -190,6 +209,10 @@ export default function CustomersPage() {
       phone_number: phone,
       email: email || undefined,
       address,
+      house_no: houseNo || undefined,
+      building_name: buildingName || undefined,
+      landmark: landmark || undefined,
+      pincode: pincode || undefined,
       purifier_model_name: modelName,
       customer_type: customerType,
       service_interval_months: finalInterval,
@@ -214,7 +237,7 @@ export default function CustomersPage() {
     setIsSuccess(true);
     setTimeout(() => {
       setIsSuccess(false);
-      setName(""); setPhone(""); setEmail(""); setAddress(""); setModelName(""); setPurchaseDate(""); setWarrantyDuration(""); setCustomerType("IN_HOUSE"); setIntervalType("3"); setCustomInterval("1");
+      setName(""); setPhone(""); setEmail(""); setAddress(""); setHouseNo(""); setBuildingName(""); setLandmark(""); setPincode(""); setModelName(""); setPurchaseDate(""); setWarrantyDuration(""); setCustomerType("IN_HOUSE"); setIntervalType("3"); setCustomInterval("1");
       setEditingCustomer(null);
       getCustomers();
     }, 1500);
@@ -282,8 +305,8 @@ export default function CustomersPage() {
           <button 
             onClick={() => {
               // Reset Form for Add
-              setName(""); setPhone(""); setEmail(""); setAddress(""); setModelName(""); setPurchaseDate(""); setWarrantyDuration(""); setCustomerType("IN_HOUSE"); setIntervalType("3"); setCustomInterval("1");
-              setScheduleInstallation(false); setSelectedWorker("");
+              setName(""); setPhone(""); setEmail(""); setAddress(""); setHouseNo(""); setBuildingName(""); setLandmark(""); setPincode(""); setModelName(""); setPurchaseDate(""); setWarrantyDuration(""); setCustomerType("IN_HOUSE"); setIntervalType("3"); setCustomInterval("1");
+              setScheduleInstallation(false); setSelectedWorker(""); setInstallationComplaint("");
               setShowAddModal(true);
             }}
             className="flex items-center gap-2 px-6 py-3 bg-[#86b83f] hover:bg-[#75a336] text-white font-bold rounded-xl shadow-[0_10px_20px_-5px_rgba(134,184,63,0.4)] transition-all active:scale-95"
@@ -376,7 +399,9 @@ export default function CustomersPage() {
                           {c.phone_number}
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-500 font-medium group-hover:text-[#111111] transition-colors">
-                          <div className="max-w-[200px] truncate" title={c.address}>{c.address}</div>
+                          <div className="max-w-[200px] truncate" title={[c.house_no, c.building_name, c.address, c.landmark, c.pincode].filter(Boolean).join(", ")}>
+                            {[c.house_no, c.building_name, c.address, c.landmark, c.pincode].filter(Boolean).join(", ")}
+                          </div>
                         </td>
                         <td className="px-6 py-4">
                           <span className={`px-3 py-1 text-xs font-black rounded-full uppercase tracking-wider ${
@@ -386,11 +411,11 @@ export default function CustomersPage() {
                           </span>
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-500 font-medium group-hover:text-[#111111] transition-colors">
-                          {c.purchase_date ? new Date(c.purchase_date).toLocaleDateString() : "-"}
+                          {c.purchase_date ? formatDate(c.purchase_date) : "-"}
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-500 font-medium group-hover:text-[#111111] transition-colors">
                           {c.warranty_expiry_date ? (
-                            <span className="text-blue-600 font-bold">{new Date(c.warranty_expiry_date).toLocaleDateString()}</span>
+                            <span className="text-blue-600 font-bold">{formatDate(c.warranty_expiry_date)}</span>
                           ) : "-"}
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-500 font-medium group-hover:text-[#111111] transition-colors">
@@ -401,7 +426,7 @@ export default function CustomersPage() {
                              const isOverdue = nextDate.getTime() < new Date().getTime();
                              return (
                                <span className={`px-3 py-1 text-xs font-black rounded-full uppercase tracking-wider ${isOverdue ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
-                                 {nextDate.toLocaleDateString()}
+                                 {formatDate(nextDate)}
                                </span>
                              );
                           })()}
@@ -476,8 +501,26 @@ export default function CustomersPage() {
               <input value={email} onChange={e => setEmail(e.target.value)} type="email" className="input-minimal rounded-xl border-gray-300 shadow-sm" placeholder="Email Address (Optional)" />
             </div>
 
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <input required value={houseNo} onChange={e => setHouseNo(e.target.value)} className="input-minimal rounded-xl border-gray-300 shadow-sm" placeholder="House / Flat No." />
+              </div>
+              <div>
+                <input value={buildingName} onChange={e => setBuildingName(e.target.value)} className="input-minimal rounded-xl border-gray-300 shadow-sm" placeholder="Building Name (Optional)" />
+              </div>
+            </div>
+
             <div>
-              <input required value={address} onChange={e => setAddress(e.target.value)} className="input-minimal rounded-xl border-gray-300 shadow-sm" placeholder="Address" />
+              <input required value={address} onChange={e => setAddress(e.target.value)} className="input-minimal rounded-xl border-gray-300 shadow-sm" placeholder="Street / Area Name" />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <input value={landmark} onChange={e => setLandmark(e.target.value)} className="input-minimal rounded-xl border-gray-300 shadow-sm" placeholder="Landmark (Optional)" />
+              </div>
+              <div>
+                <input required value={pincode} onChange={e => setPincode(e.target.value)} className="input-minimal rounded-xl border-gray-300 shadow-sm" placeholder="Pincode" />
+              </div>
             </div>
 
             <div>
@@ -548,15 +591,26 @@ export default function CustomersPage() {
               </label>
               
               {scheduleInstallation && (
-                <div>
-                  <label className="text-xs text-gray-500 font-bold uppercase mb-1 block">Assign Technician</label>
-                  <select required value={selectedWorker} onChange={e => setSelectedWorker(e.target.value)} className="input-minimal rounded-xl border-green-200 shadow-sm text-gray-700 bg-white">
-                    <option value="">-- Select Technician --</option>
-                    {workers.map(w => (
-                      <option key={w.id} value={w.id}>{w.name}</option>
-                    ))}
-                  </select>
-                </div>
+                <>
+                  <div>
+                    <label className="text-xs text-gray-500 font-bold uppercase mb-1 block">Assign Technician</label>
+                    <select required value={selectedWorker} onChange={e => setSelectedWorker(e.target.value)} className="input-minimal rounded-xl border-green-200 shadow-sm text-gray-700 bg-white">
+                      <option value="">-- Select Technician --</option>
+                      {workers.map(w => (
+                        <option key={w.id} value={w.id}>{w.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-500 font-bold uppercase mb-1 block">Complaint / Request (Optional)</label>
+                    <textarea 
+                      value={installationComplaint}
+                      onChange={e => setInstallationComplaint(e.target.value)}
+                      className="input-minimal rounded-xl border-green-200 shadow-sm min-h-[60px]"
+                      placeholder="E.g. Installation request"
+                    />
+                  </div>
+                </>
               )}
             </div>
           </div>
@@ -617,8 +671,26 @@ export default function CustomersPage() {
                   <input value={email} onChange={e => setEmail(e.target.value)} type="email" className="input-minimal rounded-xl border-gray-300 shadow-sm" placeholder="Email Address (Optional)" />
                 </div>
 
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <input required value={houseNo} onChange={e => setHouseNo(e.target.value)} className="input-minimal rounded-xl border-gray-300 shadow-sm" placeholder="House / Flat No." />
+                  </div>
+                  <div>
+                    <input value={buildingName} onChange={e => setBuildingName(e.target.value)} className="input-minimal rounded-xl border-gray-300 shadow-sm" placeholder="Building Name (Optional)" />
+                  </div>
+                </div>
+
                 <div>
-                  <input required value={address} onChange={e => setAddress(e.target.value)} className="input-minimal rounded-xl border-gray-300 shadow-sm" placeholder="Address" />
+                  <input required value={address} onChange={e => setAddress(e.target.value)} className="input-minimal rounded-xl border-gray-300 shadow-sm" placeholder="Street / Area Name" />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <input value={landmark} onChange={e => setLandmark(e.target.value)} className="input-minimal rounded-xl border-gray-300 shadow-sm" placeholder="Landmark (Optional)" />
+                  </div>
+                  <div>
+                    <input required value={pincode} onChange={e => setPincode(e.target.value)} className="input-minimal rounded-xl border-gray-300 shadow-sm" placeholder="Pincode" />
+                  </div>
                 </div>
 
                 <div>
@@ -735,7 +807,7 @@ export default function CustomersPage() {
                           {task.status}
                         </span>
                         <span className="text-sm font-bold text-gray-500">
-                          {new Date(task.service_date).toLocaleDateString()}
+                          {formatDate(task.service_date)}
                         </span>
                       </div>
                       
@@ -743,7 +815,7 @@ export default function CustomersPage() {
                         <div>
                           <p className="text-sm font-bold text-[#111111]">Technician: {task.worker?.name || "Unknown"}</p>
                           {task.completed_at && (
-                            <p className="text-xs text-gray-500 mt-1">Completed on {new Date(task.completed_at).toLocaleDateString()}</p>
+                            <p className="text-xs text-gray-500 mt-1">Completed on {formatDate(task.completed_at)}</p>
                           )}
                         </div>
                         {task.service_amount !== null && (
@@ -758,6 +830,13 @@ export default function CustomersPage() {
                         <div className="mt-3 pt-3 border-t border-gray-200">
                           <p className="text-xs text-gray-500 font-bold uppercase mb-1">Feedback / Service Details</p>
                           <p className="text-sm text-gray-800 whitespace-pre-wrap">{task.remarks}</p>
+                        </div>
+                      )}
+                      
+                      {task.complaint && (
+                        <div className="mt-2 pt-2 border-t border-gray-200">
+                          <p className="text-xs text-red-600 font-bold uppercase mb-1">Complaint</p>
+                          <p className="text-sm text-red-800 whitespace-pre-wrap">{task.complaint}</p>
                         </div>
                       )}
                     </div>
@@ -775,7 +854,7 @@ export default function CustomersPage() {
                   nextDate.setMonth(nextDate.getMonth() + (historyCustomer.service_interval_months * multiplier));
                   return (
                     <span key={multiplier} className="px-3 py-1.5 bg-blue-50 text-blue-700 font-bold text-xs rounded-xl border border-blue-100 uppercase tracking-widest shadow-sm">
-                      {nextDate.toLocaleDateString(undefined, { month: 'short', year: 'numeric', day: 'numeric' })}
+                      {formatDate(nextDate)}
                     </span>
                   );
                 })}

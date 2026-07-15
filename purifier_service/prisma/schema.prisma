@@ -23,6 +23,10 @@ model Customer{
   phone_number String
   email String? 
   address String
+  house_no String?
+  building_name String?
+  landmark String?
+  pincode String?
   purifier_model_name String
   purifier_model_number String?
   purchase_date DateTime?
@@ -77,6 +81,7 @@ model Assignment {
   payment_mode String?
   invoice_number String?
   remarks String?
+  complaint String?
   completed_at DateTime?
   createdAt DateTime @default(now())
 
