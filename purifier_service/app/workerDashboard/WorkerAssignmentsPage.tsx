@@ -2,22 +2,29 @@
 
 import { useEffect, useState } from "react";
 import { Wrench, MapPin, Phone, Settings2, CheckCircle2, User, CreditCard, Receipt, DollarSign } from "lucide-react";
+import { formatDate } from "@/lib/utils";
 
 type Assignment = {
   id: number;
   service_date: string;
   status: string;
+  complaint?: string | null;
   worker: { name: string; phone_number: string; id: number };
   customer: {
     name: string;
     phone_number: string;
     address: string;
+    house_no?: string | null;
+    building_name?: string | null;
+    landmark?: string | null;
+    pincode?: string | null;
     purifier_model_name: string;
   };
 };
 
 export default function WorkerAssignmentsPage() {
   const [activeTab, setActiveTab] = useState<"MY_TASKS" | "TEAM_TASKS">("MY_TASKS");
+  const [dateFilter, setDateFilter] = useState<"TODAY" | "TOMORROW" | "LATER" | "ALL">("ALL");
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [teamAssignments, setTeamAssignments] = useState<Assignment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -89,6 +96,33 @@ export default function WorkerAssignmentsPage() {
     getAssignments();
   }, []);
 
+  const getFilteredAssignments = (list: Assignment[]) => {
+    return list.filter(assignment => {
+      if (dateFilter === "ALL") return true;
+      
+      const assignmentDate = new Date(assignment.service_date);
+      assignmentDate.setHours(0, 0, 0, 0);
+      
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+
+      if (dateFilter === "TODAY") {
+        return assignmentDate.getTime() === today.getTime() || assignmentDate.getTime() < today.getTime(); // Include overdue in today
+      } else if (dateFilter === "TOMORROW") {
+        return assignmentDate.getTime() === tomorrow.getTime();
+      } else if (dateFilter === "LATER") {
+        return assignmentDate.getTime() > tomorrow.getTime();
+      }
+      return true;
+    });
+  };
+
+  const displayedAssignments = getFilteredAssignments(assignments);
+  const displayedTeamAssignments = getFilteredAssignments(teamAssignments);
+
   return (
     <div className="space-y-6 pb-12 max-w-7xl mx-auto">
       <div className="mb-6 md:mb-8 pl-2 flex flex-col md:flex-row md:items-end justify-between gap-4">
@@ -100,19 +134,33 @@ export default function WorkerAssignmentsPage() {
         </div>
         
         {/* Tabs */}
-        <div className="flex bg-gray-100 p-1.5 rounded-2xl w-fit">
-          <button 
-            onClick={() => setActiveTab("MY_TASKS")}
-            className={`px-6 py-2.5 rounded-xl font-bold text-sm transition-all ${activeTab === "MY_TASKS" ? 'bg-white text-[#111111] shadow-sm' : 'text-gray-500 hover:text-[#111111]'}`}
-          >
-            My Tasks
-          </button>
-          <button 
-            onClick={() => setActiveTab("TEAM_TASKS")}
-            className={`px-6 py-2.5 rounded-xl font-bold text-sm transition-all ${activeTab === "TEAM_TASKS" ? 'bg-white text-[#111111] shadow-sm' : 'text-gray-500 hover:text-[#111111]'}`}
-          >
-            Team Schedule
-          </button>
+        <div className="flex flex-col md:items-end gap-3">
+          <div className="flex bg-gray-100 p-1.5 rounded-2xl w-fit">
+            <button 
+              onClick={() => setActiveTab("MY_TASKS")}
+              className={`px-6 py-2.5 rounded-xl font-bold text-sm transition-all ${activeTab === "MY_TASKS" ? 'bg-white text-[#111111] shadow-sm' : 'text-gray-500 hover:text-[#111111]'}`}
+            >
+              My Tasks
+            </button>
+            <button 
+              onClick={() => setActiveTab("TEAM_TASKS")}
+              className={`px-6 py-2.5 rounded-xl font-bold text-sm transition-all ${activeTab === "TEAM_TASKS" ? 'bg-white text-[#111111] shadow-sm' : 'text-gray-500 hover:text-[#111111]'}`}
+            >
+              Team Schedule
+            </button>
+          </div>
+          
+          <div className="flex bg-white border border-gray-200 p-1 rounded-xl w-fit shadow-sm overflow-x-auto">
+            {["ALL", "TODAY", "TOMORROW", "LATER"].map(filter => (
+              <button 
+                key={filter}
+                onClick={() => setDateFilter(filter as any)}
+                className={`px-4 py-1.5 rounded-lg font-bold text-xs transition-all whitespace-nowrap ${dateFilter === filter ? 'bg-[#111111] text-white shadow-sm' : 'text-gray-500 hover:text-[#111111] hover:bg-gray-50'}`}
+              >
+                {filter === "ALL" ? "All Time" : filter.charAt(0) + filter.slice(1).toLowerCase()}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -122,17 +170,17 @@ export default function WorkerAssignmentsPage() {
         </div>
       ) : activeTab === "MY_TASKS" ? (
         /* MY TASKS VIEW */
-        assignments.length === 0 ? (
+        displayedAssignments.length === 0 ? (
           <div className="premium-card p-12 flex flex-col items-center justify-center text-center">
              <div className="icon-btn w-20 h-20 mb-6 cursor-default border-gray-100">
                <CheckCircle2 className="w-10 h-10 text-gray-400" />
              </div>
-             <p className="text-2xl font-extrabold text-[#111111] tracking-tight">Queue Empty</p>
-             <p className="mt-2 text-gray-500 font-medium">You have no pending assignments right now.</p>
+             <p className="text-2xl font-extrabold text-[#111111] tracking-tight">No Tasks</p>
+             <p className="mt-2 text-gray-500 font-medium">You have no pending assignments for this date filter.</p>
           </div>
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {assignments.map((assignment) => {
+            {displayedAssignments.map((assignment) => {
               const dateObj = new Date(assignment.service_date);
               const isSoon = (dateObj.getTime() - new Date().getTime()) / (1000 * 3600 * 24) <= 2;
 
@@ -144,7 +192,7 @@ export default function WorkerAssignmentsPage() {
 
                   <div className="flex justify-between items-center mb-6 mt-1">
                     <span className="text-xs font-extrabold px-3 py-1 bg-gray-100 rounded-lg text-[#111111] border border-gray-200 uppercase tracking-widest">
-                      {dateObj.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
+                      {formatDate(dateObj)}
                     </span>
                     {isSoon && (
                       <span className="badge-urgent shadow-sm">
@@ -159,7 +207,13 @@ export default function WorkerAssignmentsPage() {
                     <div className="flex items-start gap-4">
                       <MapPin className="w-5 h-5 text-[#111111] shrink-0 mt-0.5" />
                       <p className="text-sm text-[#111111] leading-relaxed font-semibold">
-                        {assignment.customer.address}
+                        {[
+                          assignment.customer.house_no, 
+                          assignment.customer.building_name, 
+                          assignment.customer.address, 
+                          assignment.customer.landmark, 
+                          assignment.customer.pincode
+                        ].filter(Boolean).join(", ")}
                       </p>
                     </div>
 
@@ -170,6 +224,15 @@ export default function WorkerAssignmentsPage() {
                       </p>
                     </div>
                   </div>
+
+                  {assignment.complaint && (
+                    <div className="mb-8 bg-red-50 p-4 rounded-2xl border border-red-100">
+                      <p className="text-sm text-red-700 font-bold uppercase mb-1">Complaint / Issue:</p>
+                      <p className="text-sm text-red-800 leading-relaxed font-medium">
+                        {assignment.complaint}
+                      </p>
+                    </div>
+                  )}
 
                   <div className="flex flex-col gap-4">
                     <a href={`tel:${assignment.customer.phone_number}`} className="icon-btn w-full py-4 text-base font-bold flex gap-3 text-[#111111]">
@@ -200,10 +263,10 @@ export default function WorkerAssignmentsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 bg-white">
-                {teamAssignments.map(a => (
+                {displayedTeamAssignments.map(a => (
                   <tr key={a.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-5 text-sm font-semibold text-[#111111] whitespace-nowrap">
-                      {new Date(a.service_date).toLocaleDateString()}
+                      {formatDate(a.service_date)}
                     </td>
                     <td className="px-6 py-5">
                       <div className="flex items-center gap-2">
@@ -216,14 +279,14 @@ export default function WorkerAssignmentsPage() {
                       <div className="text-xs text-gray-500 mt-0.5">{a.customer.purifier_model_name}</div>
                     </td>
                     <td className="px-6 py-5 text-sm text-gray-600 max-w-xs truncate">
-                      {a.customer.address}
+                      {[a.customer.house_no, a.customer.building_name, a.customer.address, a.customer.landmark, a.customer.pincode].filter(Boolean).join(", ")}
                     </td>
                   </tr>
                 ))}
-                {teamAssignments.length === 0 && (
+                {displayedTeamAssignments.length === 0 && (
                   <tr>
                     <td colSpan={4} className="px-6 py-12 text-center text-gray-500 font-medium">
-                      No team assignments pending.
+                      No team assignments found for this date filter.
                     </td>
                   </tr>
                 )}

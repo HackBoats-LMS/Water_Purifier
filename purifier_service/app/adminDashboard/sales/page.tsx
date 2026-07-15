@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Search, Eye, Edit2, X } from "lucide-react";
+import { formatDate } from "@/lib/utils";
 
 type Assignment = {
   id: number;
@@ -12,6 +13,7 @@ type Assignment = {
   status: string;
   completed_at: string | null;
   remarks?: string | null;
+  complaint?: string | null;
   worker: { name: string; phone_number: string };
   customer: { name: string; phone_number: string; address: string };
 };
@@ -33,6 +35,7 @@ export default function SalesPage() {
   const [newInvoice, setNewInvoice] = useState("");
   const [newAmount, setNewAmount] = useState("");
   const [newPaymentMode, setNewPaymentMode] = useState("CASH");
+  const [newComplaint, setNewComplaint] = useState("");
 
   // View & Edit Modal State
   const [viewingAssignment, setViewingAssignment] = useState<Assignment | null>(null);
@@ -121,14 +124,15 @@ export default function SalesPage() {
           status: "COMPLETED",
           invoice_number: newInvoice || null,
           service_amount: newAmount ? parseFloat(newAmount) : null,
-          payment_mode: newPaymentMode || "CASH"
+          payment_mode: newPaymentMode || "CASH",
+          complaint: newComplaint || undefined
         })
       });
 
       if (!res.ok) throw new Error("Failed to create sale entry");
 
       setShowNewSaleModal(false);
-      setNewCustomerId(""); setNewWorkerId(""); setNewDate(""); setNewInvoice(""); setNewAmount(""); setNewPaymentMode("CASH");
+      setNewCustomerId(""); setNewWorkerId(""); setNewDate(""); setNewInvoice(""); setNewAmount(""); setNewPaymentMode("CASH"); setNewComplaint("");
       fetchAssignments();
     } catch(err) {
       alert("Error creating new sale entry");
@@ -244,7 +248,7 @@ export default function SalesPage() {
                         {a.invoice_number || `PM-${new Date().getFullYear()}-${String(a.id).padStart(5, '0')}`}
                       </td>
                       <td className="px-6 py-4 text-sm font-medium text-gray-500">
-                        {new Date(a.service_date).toLocaleDateString()}
+                        {formatDate(a.service_date)}
                       </td>
                       <td className="px-6 py-4">
                         <span className={`px-3 py-1 text-xs font-black rounded-full uppercase tracking-wider ${
@@ -329,7 +333,7 @@ export default function SalesPage() {
                 <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-1">Assignment Info</p>
                 <p className="text-gray-700"><strong>Status:</strong> <span className="uppercase text-sm tracking-widest font-bold">{viewingAssignment.status}</span></p>
                 <p className="text-gray-700"><strong>Assigned To:</strong> {viewingAssignment.worker.name}</p>
-                <p className="text-gray-700"><strong>Scheduled Date:</strong> {new Date(viewingAssignment.service_date).toLocaleDateString()}</p>
+                <p className="text-gray-700"><strong>Scheduled Date:</strong> {formatDate(viewingAssignment.service_date)}</p>
                 {viewingAssignment.completed_at && (
                   <p className="text-gray-700"><strong>Completed At:</strong> {new Date(viewingAssignment.completed_at).toLocaleString()}</p>
                 )}
@@ -346,6 +350,13 @@ export default function SalesPage() {
                 <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
                   <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-1">Feedback / Service Details</p>
                   <p className="text-gray-700 whitespace-pre-wrap">{viewingAssignment.remarks}</p>
+                </div>
+              )}
+
+              {viewingAssignment.complaint && (
+                <div className="bg-red-50 p-4 rounded-xl border border-red-100">
+                  <p className="text-xs text-red-600 font-bold uppercase tracking-wider mb-1">Complaint</p>
+                  <p className="text-red-800 whitespace-pre-wrap">{viewingAssignment.complaint}</p>
                 </div>
               )}
             </div>
@@ -494,6 +505,16 @@ export default function SalesPage() {
                   <option value="CARD">Card</option>
                   <option value="FREE_AMC">Free / AMC</option>
                 </select>
+              </div>
+
+              <div>
+                <label className="text-xs text-gray-500 font-bold uppercase mb-1 block">Complaint (Optional)</label>
+                <textarea 
+                  value={newComplaint} 
+                  onChange={e => setNewComplaint(e.target.value)} 
+                  className="input-minimal rounded-xl border-gray-300 shadow-sm min-h-[80px]" 
+                  placeholder="Enter any customer complaint..." 
+                />
               </div>
 
               <button type="submit" className="tactile-btn w-full mt-6 shadow-2xl py-4 text-base">

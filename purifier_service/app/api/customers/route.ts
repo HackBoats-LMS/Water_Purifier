@@ -44,6 +44,10 @@ export async function POST(request: NextRequest) {
       email,
       purchase_date,
       warranty_duration_months,
+      house_no,
+      building_name,
+      landmark,
+      pincode,
     } = body;
 
     if (!name || !phone_number || !address || !purifier_model_name) {
@@ -67,6 +71,10 @@ export async function POST(request: NextRequest) {
         name,
         phone_number,
         address,
+        house_no,
+        building_name,
+        landmark,
+        pincode,
         purifier_model_name,
         purifier_model_number,
         customer_type,

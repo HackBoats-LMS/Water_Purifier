@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { ClipboardList, AlertCircle, Calendar, UserCheck, CheckCircle2, User, MapPin, XCircle, Search } from "lucide-react";
+import { formatDate } from "@/lib/utils";
 
 type Customer = {
   id: number;
@@ -23,6 +24,7 @@ type Assignment = {
   id: number;
   service_date: string;
   status: string;
+  complaint?: string | null;
   remarks?: string | null;
   worker: { name: string; phone_number: string };
   customer: { name: string; address: string; purifier_model_name: string };
@@ -38,6 +40,7 @@ export default function AssignmentsPage() {
   const [selectedCustomer, setSelectedCustomer] = useState("");
   const [selectedWorker, setSelectedWorker] = useState("");
   const [serviceDate, setServiceDate] = useState("");
+  const [complaint, setComplaint] = useState("");
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -46,6 +49,7 @@ export default function AssignmentsPage() {
   const [activeTab, setActiveTab] = useState<"OVERDUE" | "THIS_WEEK" | "NEXT_WEEK" | "NEXT_MONTH">("OVERDUE");
   const [customerSearchInput, setCustomerSearchInput] = useState("");
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<"ALL" | "PENDING" | "COMPLETED" | "CANCELLED">("ALL");
 
   // Filtering Logic for Tabs
   const today = new Date();
@@ -104,6 +108,7 @@ export default function AssignmentsPage() {
         customerId: selectedCustomer,
         workerId: selectedWorker,
         service_date: serviceDate,
+        complaint: complaint || undefined,
       }),
     });
     setIsSubmitting(false);
@@ -120,6 +125,7 @@ export default function AssignmentsPage() {
     setSelectedCustomer("");
     setSelectedWorker("");
     setServiceDate("");
+    setComplaint("");
 
     // Refresh lists
     await fetchData();
@@ -215,7 +221,7 @@ export default function AssignmentsPage() {
                     <div className="mt-5 pt-4 border-t border-gray-100 flex items-center justify-between text-xs font-bold uppercase tracking-wider text-gray-500">
                       <span>Model: {c.purifier_model_name}</span>
                       <span>
-                        Last: {c.last_service_date ? new Date(c.last_service_date).toLocaleDateString() : 'Never'}
+                        Last: {c.last_service_date ? formatDate(c.last_service_date) : 'Never'}
                       </span>
                     </div>
                     <button
@@ -338,6 +344,15 @@ export default function AssignmentsPage() {
                   className="input-minimal [color-scheme:light]"
                 />
               </div>
+
+              <div className="relative">
+                <textarea
+                  value={complaint}
+                  onChange={e => setComplaint(e.target.value)}
+                  className="input-minimal rounded-xl border-gray-300 shadow-sm w-full min-h-[80px]"
+                  placeholder="Complaint or issue (optional)"
+                />
+              </div>
             </div>
 
             <button
@@ -363,10 +378,27 @@ export default function AssignmentsPage() {
 
       {/* Current Assignments List */}
       <div className="mt-8">
-        <h2 className="text-lg font-extrabold text-[#111111] tracking-tight flex items-center gap-2 pl-2 mb-4">
-          <ClipboardList className="w-5 h-5 text-[#111111]" />
-          All Assignments
-        </h2>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4 pr-2">
+          <h2 className="text-lg font-extrabold text-[#111111] tracking-tight flex items-center gap-2 pl-2">
+            <ClipboardList className="w-5 h-5 text-[#111111]" />
+            All Assignments
+          </h2>
+          <div className="flex bg-gray-100 p-1 rounded-xl">
+            {["ALL", "PENDING", "COMPLETED", "CANCELLED"].map(status => (
+              <button
+                key={status}
+                onClick={() => setStatusFilter(status as any)}
+                className={`px-4 py-1.5 text-xs font-bold rounded-lg transition-colors ${
+                  statusFilter === status 
+                    ? 'bg-white text-blue-600 shadow-sm' 
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                {status.charAt(0) + status.slice(1).toLowerCase()}
+              </button>
+            ))}
+          </div>
+        </div>
         <div className="bg-white/80 backdrop-blur-sm rounded-[2rem] border border-gray-200 shadow-sm overflow-hidden min-w-0">
           <div className="overflow-x-auto min-w-0">
             <table className="w-full text-left border-collapse min-w-[800px] lg:min-w-full whitespace-nowrap lg:whitespace-normal">
@@ -380,10 +412,12 @@ export default function AssignmentsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 bg-white">
-                {allAssignments.map(a => (
+                {allAssignments
+                  .filter(a => statusFilter === "ALL" || a.status === statusFilter)
+                  .map(a => (
                   <tr key={a.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-5 py-4 text-sm font-semibold text-[#111111] whitespace-nowrap">
-                      {new Date(a.service_date).toLocaleDateString()}
+                      {formatDate(a.service_date)}
                     </td>
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-2">
@@ -398,6 +432,12 @@ export default function AssignmentsPage() {
                         <div className="mt-2 text-xs text-gray-600 bg-gray-50 p-2 rounded-lg border border-gray-100 whitespace-pre-wrap max-w-[200px] lg:max-w-xs">
                           <span className="font-bold text-gray-700 block mb-0.5">Feedback / Notes:</span>
                           {a.remarks}
+                        </div>
+                      )}
+                      {a.complaint && (
+                        <div className="mt-2 text-xs text-red-600 bg-red-50 p-2 rounded-lg border border-red-100 whitespace-pre-wrap max-w-[200px] lg:max-w-xs">
+                          <span className="font-bold text-red-700 block mb-0.5">Complaint:</span>
+                          {a.complaint}
                         </div>
                       )}
                     </td>
@@ -419,10 +459,10 @@ export default function AssignmentsPage() {
                     </td>
                   </tr>
                 ))}
-                {allAssignments.length === 0 && (
+                {allAssignments.filter(a => statusFilter === "ALL" || a.status === statusFilter).length === 0 && (
                   <tr>
                     <td colSpan={5} className="px-5 py-8 text-center text-sm text-gray-500 font-medium">
-                      No assignments found.
+                      No assignments found for this filter.
                     </td>
                   </tr>
                 )}

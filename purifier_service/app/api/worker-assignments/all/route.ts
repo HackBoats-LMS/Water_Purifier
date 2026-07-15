@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
       },
       include: {
         worker: { select: { id: true, name: true, phone_number: true } },
-        customer: { select: { id: true, name: true, phone_number: true, address: true, purifier_model_name: true } }
+        customer: { select: { id: true, name: true, phone_number: true, address: true, house_no: true, building_name: true, landmark: true, pincode: true, purifier_model_name: true } }
       },
       orderBy: {
         service_date: "asc"
